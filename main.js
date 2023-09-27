@@ -1,6 +1,6 @@
 const fs = require('fs');
 const path = require('path');
-const { Client, Collection, Events } = require('discord.js');
+const { Client, Collection } = require('discord.js');
 require('dotenv').config();
 
 const apiKey = process.env.API_KEY;
@@ -34,14 +34,15 @@ for (const folder of commandFolders) {
 const eventsPath = path.join(__dirname, 'events');
 const eventFiles = fs.readdirSync(eventsPath).filter(f => f.endsWith('.js'));
 
+
+
 for(const file of eventFiles){
 	const filePath = path.join(eventsPath, file);
 	const event = require(filePath);
-
 	if(event.once){
-		client.once(event.name, (...args)=> event.execute(...args));
+		client.once(event.name, (...args) => event.execute(...args));
 	}else{
-		client.on(event.name, (...args)=>event.execute(...args));
+		client.on(event.name, (...args) => event.execute(...args));
 	}
 }
 
