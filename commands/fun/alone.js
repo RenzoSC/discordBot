@@ -1,5 +1,26 @@
-const { SlashCommandBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle} = require("discord.js");
+const { SlashCommandBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, EmbedBuilder} = require("discord.js");
 
+
+function embedWinner(win,user,winmoji,losmoji){
+    let embedmsg;
+    if(win == 0){
+        embedmsg = new EmbedBuilder()
+            .setTitle(`Ya tenemos a un ganador!`)
+            .setColor('#FFDE33')
+            .setDescription(`**${user.username}** => ${winmoji}\t**Bot** => ${losmoji}\n**EL RESULTADO ES!!!**\n\nUn empate!!\nPar de boludos eligieron ${winmoji}`)
+    }else if(win == 1){
+        embedmsg = new EmbedBuilder()
+            .setTitle('Ya tenemos a un ganador!')
+            .setColor('#FFDE33')
+            .setDescription(`**${user.username}** => ${winmoji}\t**Bot** => ${losmoji}\n**EL GANADOR ES!!!**\n**${user.username}!!**\tMansa paliza le pegaste al bot`)
+    }else{
+        embedmsg = new EmbedBuilder()
+            .setTitle('Ya tenemos a un ganador!')
+            .setColor('#FFDE33')
+            .setDescription(`**${user.username}** => ${losmoji}\t**Bot** => ${winmoji}\n**EL GANADOR ES!!!**\n**Bot!!**\tComo te va a ganar un bot, por eso te gorrean gil`)
+    }
+    return embedmsg;
+}
 module.exports = {
     data : new SlashCommandBuilder()
         .setName('rpsalone')
@@ -10,45 +31,65 @@ module.exports = {
         const rock = new ButtonBuilder()
 	    .setCustomId('rock')
 	    .setStyle(ButtonStyle.Primary)
-	    .setEmoji('✊');
+	    .setEmoji('🪨');
         const paper = new ButtonBuilder()
         .setCustomId('paper')
         .setStyle(ButtonStyle.Primary)
-        .setEmoji('✋')
+        .setEmoji('🧻')
         const scissors = new ButtonBuilder()
         .setCustomId('scissors')
         .setStyle(ButtonStyle.Primary)
-        .setEmoji('✌')
+        .setEmoji('✂️')
 
-        const user1 = interaction.user.toString()
+        const user1 = interaction.user;
         const row = new ActionRowBuilder()
             .addComponents(rock, paper, scissors)
 
         const response = await interaction.reply({
-            content : `${user1} vs BOT!!\nSelect your hand:\n`,
+            content : `${user1.toString()} vs BOT!!\nSelect your hand:\n`,
             components: [row],
         });
         
-        const options = [{name:'rock', emoji:'✊'}, {name:'paper', emoji:'✋'}, {name:'scissors', emoji:'✌'}];
+        const options = [{name:'rock', emoji:':rock:'}, {name:'paper', emoji:':roll_of_paper:'}, {name:'scissors', emoji:':scissors:'}];
         const fighter = options[Math.floor(Math.random() * options.length)];
         const collectorFilter = i => i.user.id === interaction.user.id;
         try{
             const emoji = await response.awaitMessageComponent({ filter : collectorFilter, time: 60000})
 
             if(emoji.customId == fighter.name){
-                await emoji.update({ content: `${user1} eligió ${fighter.emoji}\tBot eligió ${fighter.emoji}\nEL RESULTADO ES!!!\n\nUn empate!!\nPar de boludos eligieron ${fighter.emoji}`, components: [] });
+                
+                const embedmsg = embedWinner(0,user1,fighter.emoji,fighter.emoji);
+                await emoji.update({ content: `${user1.toString()} vs BOT!!`, components: [], embeds: [embedmsg] });
+
             }else if(emoji.customId == 'rock' && fighter.name == 'scissors'){
-                await emoji.update({ content: `${user1} eligió ✊\tBot eligió ${fighter.emoji}\nEL RESULTADO ES!!!\nAhhhhhh la buena piedra... Nada le gana a la piedra\n${user1} le ganó al bot!`, components: [] });
+
+                const embedmsg = embedWinner(1,user1,':rock:',fighter.emoji);
+                await emoji.update({ content: `${user1.toString()} vs BOT!!`, components: [], embeds: [embedmsg] });
+            
             }else if(emoji.customId == 'scissors' && fighter.name == 'rock'){
-                await emoji.update({ content: `${user1} eligió ✌\tBot eligió ${fighter.emoji}\nEL RESULTADO ES!!!\nQue tan boludo se tiene que ser para que te gane un bot...\nEl bot le ganó a ${user1}!`, components: [] });
+            
+                const embedmsg = embedWinner(-1,user1,fighter.emoji,':scissors:');
+                await emoji.update({ content: `${user1.toString()} vs BOT!!`, components: [], embeds: [embedmsg] });
+            
             }else if(emoji.customId == 'rock' && fighter.name == 'paper'){
-                await emoji.update({ content: `${user1} eligió ✊\tBot eligió ${fighter.emoji}\nEL RESULTADO ES!!!\nNAOOOOO le ganaron a la piedraaa\nEl bot le ganó a ${user1}!`, components: [] });
+            
+                const embedmsg = embedWinner(-1,user1,fighter.emoji,':rock:');
+                await emoji.update({ content: `${user1.toString()} vs BOT!!`, components: [], embeds: [embedmsg] });
+            
             }else if(emoji.customId == 'paper' && fighter.name == 'rock'){
-                await emoji.update({ content: `${user1} eligió ✋\tBot eligió ${fighter.emoji}\nEL RESULTADO ES!!!\nNo sé como hiciste pero le ganaste a la piedra\n${user1} le ganó al bot!`, components: [] });
+                
+                const embedmsg = embedWinner(1, user1, ':roll_of_paper:', fighter.emoji);
+                await emoji.update({ content: `${user1.toString()} vs BOT!!`, components: [], embeds: [embedmsg] });
+            
             }else if(emoji.customId == 'paper' && fighter.name == 'scissors'){
-                await emoji.update({ content: `${user1} eligió ✋\tBot eligió ${fighter.emoji}\nEL RESULTADO ES!!!\nUna vez más pierden los malos...\nEl bot le ganó a ${user1}!`, components: [] });
+                
+                const embedmsg = embedWinner(-1, user1, fighter.emoji, ':roll_of_paper:');
+                await emoji.update({ content: `${user1.toString()} vs BOT!!`, components: [], embeds: [embedmsg] });
+            
             }else if(emoji.customId == 'scissors' && fighter.name == 'paper'){
-                await emoji.update({ content: `${user1} eligió ✌\tBot eligió ${fighter.emoji}\nEL RESULTADO ES!!!\nRe de puto elegir tijera...\n${user1} le ganó al bot!`, components: [] });
+                
+                const embedmsg = embedWinner(1, user1, ':scissors:',fighter.emoji);
+                await emoji.update({ content: `${user1.toString()} vs BOT!!`, components: [], embeds: [embedmsg] });
             }
 
         }catch(e){
