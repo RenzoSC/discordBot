@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, MessagePayload,  MessageFlags} = require("discord.js");
+const { SlashCommandBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, MessagePayload,  MessageFlags,EmbedBuilder} = require("discord.js");
 
 module.exports = {
     data : new SlashCommandBuilder()
@@ -28,6 +28,7 @@ module.exports = {
         const response_user = await interaction.reply({
             content : `${user1} vs ${user2}\nSelect your hand:\n`,
             components: [row],
+            ephemeral:true,
         });
 
         const message = new MessagePayload(user2, {
@@ -36,18 +37,21 @@ module.exports = {
             flags:MessageFlags.Ephemeral,
         });
 
-        const response_opp = await interaction.followUp(user2, message);
+        const response_opp = await interaction.followUp(message);
 
-        const collectorFilter = i => i.user.id === interaction.user.id;
+        const collectorFilter = (i) => i.customId == 'rock' || i.customId == 'paper' || i.customId == 'scissors';
+
         try{
             const emoji_user = await response_user.awaitMessageComponent({
-                filter:collectorFilter, time: 6000
+                filter:collectorFilter, time: 60000
             })
-
+            console.log('\n\n\n');
+            console.log(emoji_user);
             const emoji_opp = await response_opp.awaitMessageComponent({
-                filter: collectorFilter, time: 6000,
+                filter:collectorFilter, time: 60000,
             })
-
+            console.log('\n\n\n');
+            console.log(emoji_opp);
             if(emoji_user.customId == emoji_opp.customId){
                 embedWinner(0, user1, user2, emoji_user.emoji, emoji_opp.emoji, interaction);
             }else if(emoji_user.customId == 'rock' && emoji_opp.customId == 'scissors'){
