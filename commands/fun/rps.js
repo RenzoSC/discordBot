@@ -14,16 +14,20 @@ module.exports = {
         const paper = new ButtonBuilder()
         .setCustomId('paper')
         .setStyle(ButtonStyle.Primary)
-        .setEmoji('🧻')
+        .setEmoji('🧻');
         const scissors = new ButtonBuilder()
         .setCustomId('scissors')
         .setStyle(ButtonStyle.Primary)
-        .setEmoji('✂️')
+        .setEmoji('✂️');
+
 
         const user1 = interaction.user;
         const user2 = interaction.options.getUser('opponent');
         const row = new ActionRowBuilder()
-            .addComponents(rock, paper, scissors)
+            .addComponents(rock, paper, scissors);
+
+        const row_opponent = new ActionRowBuilder()
+            .addComponents(rock,paper, scissors);
 
         const response_user = await interaction.reply({
             content : `${user1} vs ${user2}\nSelect your hand:\n`,
@@ -33,39 +37,55 @@ module.exports = {
 
         const message = new MessagePayload(user2, {
             content: `${user1} vs ${user2}\nSelect your hand:\n`,
-            components: [row],
+            components: [row_opponent],
             flags:MessageFlags.Ephemeral,
         });
 
         const response_opp = await interaction.followUp(message);
 
         const collectorFilter = (i) => i.customId == 'rock' || i.customId == 'paper' || i.customId == 'scissors';
+        
 
+        const emoji = {'rock':'🪨', 'scissors':'✂️','paper':'🧻'}
+        
         try{
             const emoji_user = await response_user.awaitMessageComponent({
                 filter:collectorFilter, time: 60000
             })
-            console.log('\n\n\n');
-            console.log(emoji_user);
+           
             const emoji_opp = await response_opp.awaitMessageComponent({
                 filter:collectorFilter, time: 60000,
             })
-            console.log('\n\n\n');
-            console.log(emoji_opp);
-            if(emoji_user.customId == emoji_opp.customId){
-                embedWinner(0, user1, user2, emoji_user.emoji, emoji_opp.emoji, interaction);
+            
+
+            if(emoji[emoji_user.customId] == emoji[emoji_opp.customId]){
+
+                embedWinner(0, user1, user2, emoji[emoji_user.customId], emoji[emoji_opp.customId], interaction);
+
             }else if(emoji_user.customId == 'rock' && emoji_opp.customId == 'scissors'){
-                embedWinner(1, user1, user2, emoji_user.emoji, emoji_opp.emoji, interaction);
+
+                embedWinner(1, user1, user2, emoji[emoji_user.customId], emoji[emoji_opp.customId], interaction);
+
             }else if(emoji_user.customId == 'scissors' && emoji_opp.customId == 'rock'){
-                embedWinner(-1,user1,user2, emoji_opp.emoji, emoji_user.emoji, interaction);
+
+                embedWinner(-1,user1,user2, emoji[emoji_opp.customId], emoji[emoji_user.customId], interaction);
+
             }else if(emoji_user.customId == 'rock' && emoji_opp.customId == 'paper'){
-                embedWinner(-1,user1,user2,emoji_opp.emoji, emoji_user.emoji, interaction);
+
+                embedWinner(-1,user1,user2,emoji[emoji_opp.customId], emoji[emoji_user.customId], interaction);
+
             }else if(emoji_user.customId == 'paper' && emoji_opp.customId == 'rock'){
-                embedWinner(1,user1,user2,emoji_user.emoji, emoji_opp.emoji, interaction);
+
+                embedWinner(1,user1,user2,emoji[emoji_user.customId], emoji[emoji_opp.customId], interaction);
+
             }else if(emoji_user.customId == 'paper' && emoji_opp.customId == 'scissors'){
-                embedWinner(-1,user1,user2,emoji_opp.emoji,emoji_user.emoji, interaction);
+
+                embedWinner(-1,user1,user2,emoji[emoji_opp.customId],emoji[emoji_user.customId], interaction);
+
             }else if (emoji_user.customId == 'scissors' && emoji_opp.customId == 'paper'){
-                embedWinner(1, user1, user2, emoji_user.emoji, emoji_opp.emoji, interaction);
+
+                embedWinner(1, user1, user2, emoji[emoji_user.customId], emoji[emoji_opp.customId], interaction);
+                
             }
 
         }catch(e){
@@ -87,12 +107,12 @@ async function embedWinner(win,user,opp,winmoji,losmoji, interaction){
         embedmsg = new EmbedBuilder()
             .setTitle('Ya tenemos a un ganador!')
             .setColor('#FFDE33')
-            .setDescription(`**${user.username}** => ${winmoji}\t**${opp.username}** => ${losmoji}\n**EL GANADOR ES!!!**\n**${user.username}!!**\tMansa paliza le pegaste al bot`)
+            .setDescription(`**${user.username}** => ${winmoji}\t**${opp.username}** => ${losmoji}\n**EL GANADOR ES!!!**\n**${user.username}!!**\tMansa paliza le pegaste a **${opp.username}**`)
     }else{
         embedmsg = new EmbedBuilder()
             .setTitle('Ya tenemos a un ganador!')
             .setColor('#FFDE33')
-            .setDescription(`**${user.username}** => ${losmoji}\t**${opp.username}** => ${winmoji}\n**EL GANADOR ES!!!**\n**${opp.username}**\tComo te va a ganar un bot, por eso te gorrean gil`)
+            .setDescription(`**${user.username}** => ${losmoji}\t**${opp.username}** => ${winmoji}\n**EL GANADOR ES!!!**\n**${opp.username}**\tComo te va a ganar un **${opp.username}**, por eso te gorrean gil`)
     }
     await interaction.followUp({ content: `${user.username} vs ${opp.username}`, components: [], embeds: [embedmsg] });
 }

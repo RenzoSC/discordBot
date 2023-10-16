@@ -52,7 +52,7 @@ module.exports = {
         
         const options = [{name:'rock', emoji:':rock:'}, {name:'paper', emoji:':roll_of_paper:'}, {name:'scissors', emoji:':scissors:'}];
         const fighter = options[Math.floor(Math.random() * options.length)];
-        const collectorFilter = i => i.user.id === interaction.user.id;
+        const collectorFilter = (i) => i.customId == 'rock' || i.customId == 'paper' || i.customId == 'scissors';
         try{
             const emoji = await response.awaitMessageComponent({ filter : collectorFilter, time: 60000})
 
