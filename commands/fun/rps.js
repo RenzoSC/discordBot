@@ -26,71 +26,69 @@ module.exports = {
         const row = new ActionRowBuilder()
             .addComponents(rock, paper, scissors);
 
-        const row_opponent = new ActionRowBuilder()
-            .addComponents(rock,paper, scissors);
 
-        const response_user = await interaction.reply({
+        const response_users = await interaction.reply({
             content : `${user1} vs ${user2}\nSelect your hand:\n`,
             components: [row],
-            ephemeral:true,
         });
 
-        const message = new MessagePayload(user2, {
-            content: `${user1} vs ${user2}\nSelect your hand:\n`,
-            components: [row_opponent],
-            flags:MessageFlags.Ephemeral,
-        });
 
-        const response_opp = await interaction.followUp(message);
-
-        const collectorFilter = (i) => i.customId == 'rock' || i.customId == 'paper' || i.customId == 'scissors';
+        const collectorFilter = (i) => i.user.id == user1.id || i.user.id == user2.id;
         
 
         const emoji = {'rock':'🪨', 'scissors':'✂️','paper':'🧻'}
         
-        try{
-            const emoji_user = await response_user.awaitMessageComponent({
-                filter:collectorFilter, time: 60000
-            })
-           
-            const emoji_opp = await response_opp.awaitMessageComponent({
-                filter:collectorFilter, time: 60000,
-            })
+            const waitForSelections = async ()=>{
+            try{
+                const selections = new Map();
+
+                while (selections.size < 2){
+                    const componentInteraction = await response_users.awaitMessageComponent({ collectorFilter, time: 60000 });
+
+                    selections.set(componentInteraction.user.id, componentInteraction.customId);
+                    componentInteraction.deferUpdate();
+                    
+                }
+
+                const emoji_user = selections.get(user1.id);
+                const emoji_opp = selections.get(user2.id);
+                    
             
+                if(emoji[emoji_user] == emoji[emoji_opp]){
 
-            if(emoji[emoji_user.customId] == emoji[emoji_opp.customId]){
-
-                embedWinner(0, user1, user2, emoji[emoji_user.customId], emoji[emoji_opp.customId], interaction);
-
-            }else if(emoji_user.customId == 'rock' && emoji_opp.customId == 'scissors'){
-
-                embedWinner(1, user1, user2, emoji[emoji_user.customId], emoji[emoji_opp.customId], interaction);
-
-            }else if(emoji_user.customId == 'scissors' && emoji_opp.customId == 'rock'){
-
-                embedWinner(-1,user1,user2, emoji[emoji_opp.customId], emoji[emoji_user.customId], interaction);
-
-            }else if(emoji_user.customId == 'rock' && emoji_opp.customId == 'paper'){
-
-                embedWinner(-1,user1,user2,emoji[emoji_opp.customId], emoji[emoji_user.customId], interaction);
-
-            }else if(emoji_user.customId == 'paper' && emoji_opp.customId == 'rock'){
-
-                embedWinner(1,user1,user2,emoji[emoji_user.customId], emoji[emoji_opp.customId], interaction);
-
-            }else if(emoji_user.customId == 'paper' && emoji_opp.customId == 'scissors'){
-
-                embedWinner(-1,user1,user2,emoji[emoji_opp.customId],emoji[emoji_user.customId], interaction);
-
-            }else if (emoji_user.customId == 'scissors' && emoji_opp.customId == 'paper'){
-
-                embedWinner(1, user1, user2, emoji[emoji_user.customId], emoji[emoji_opp.customId], interaction);
-                
+                    embedWinner(0, user1, user2, emoji[emoji_user], emoji[emoji_opp], interaction);
+        
+                }else if(emoji_user == 'rock' && emoji_opp == 'scissors'){
+        
+                    embedWinner(1, user1, user2, emoji[emoji_user], emoji[emoji_opp], interaction);
+        
+                }else if(emoji_user == 'scissors' && emoji_opp == 'rock'){
+        
+                    embedWinner(-1,user1,user2, emoji[emoji_opp], emoji[emoji_user], interaction);
+        
+                }else if(emoji_user == 'rock' && emoji_opp == 'paper'){
+        
+                    embedWinner(-1,user1,user2,emoji[emoji_opp], emoji[emoji_user], interaction);
+        
+                }else if(emoji_user == 'paper' && emoji_opp == 'rock'){
+        
+                    embedWinner(1,user1,user2,emoji[emoji_user], emoji[emoji_opp], interaction);
+        
+                }else if(emoji_user== 'paper' && emoji_opp == 'scissors'){
+        
+                    embedWinner(-1,user1,user2,emoji[emoji_opp],emoji[emoji_user], interaction);
+        
+                }else if (emoji_user == 'scissors' && emoji_opp == 'paper'){
+        
+                    embedWinner(1, user1, user2, emoji[emoji_user], emoji[emoji_opp], interaction);
+        
+                }
+            }catch(e){
+                await interaction.editReply({ content: 'Confirmation not received within 1 minute, cancelling', components: [] });
             }
-
-        }catch(e){
-            await interaction.editReply({ content: 'Confirmation not received within 1 minute, cancelling', components: [] });
+                
         }
+        waitForSelections();
     }
 
 }
