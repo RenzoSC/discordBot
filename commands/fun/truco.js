@@ -1,24 +1,40 @@
 const {SlashCommandBuilder, ActionRowBuilder, ButtonStyle, ButtonBuilder } = require("discord.js");
 
-class Table{
-    constructor(user, rival){
-        this.user = user;
-        this.rival = rival;
-        this.round = 0;
-        this.firstStageWon = user;
-    }
-}
-
 class Player{
     constructor(player, iconImg){
         this.player = player;
         this.icon = iconImg;
-        this.hand = [];
+        this.hand = {"unused":[], "used":[]};
         this.points = 0;
     }
 
     addCard(card){
-        this.hand.push(card);
+        this.hand.unused.push(card);
+    }
+
+    addPoints(points){
+        this.points += points;
+    }
+
+    useCard(card){
+        const eliminated = this.hand.unused.splice(card,1);
+        this.hand.used.concat(eliminated);
+    }
+
+    get getPoints(){
+        return this.points;
+    }
+
+    get getHand(){
+        return this.hand.unused;
+    }
+
+    get getUsedHand(){
+        return this.hand.used;
+    }
+
+    get getTotalCards(){
+        return this.hand.unused.length;
     }
 }
 
@@ -28,8 +44,19 @@ class Card{
         this.value = value;
         this.image = `./images/cards/${palo}/${value}`;
     }
-}
 
+    get getType(){
+        return this.type;
+    }
+
+    get getValue(){
+        return this.value;
+    }
+
+    get getImage(){
+        return this.image;
+    }
+} 
 
 class Baraja{
     constructor(){
@@ -72,6 +99,45 @@ class Baraja{
                 rival.addCard(this.cartas.pop());
             }
         }
+    }
+}
+
+class Table{
+    constructor(user, iconUser, rival, iconRival){
+        this.user = new Player(user, iconUser);
+        this.rival = new Player(rival, iconRival);
+        this.round = 0;
+        this.firstStageWon = user;
+        this.winTrack = [];
+        this.baraja = new Baraja();
+    }
+
+    nextRound(){
+        if(this.round == 3){
+            this.round -=3;
+            this.winTrack = [];
+        }else{
+            this.round +=1;
+        }
+    }
+
+    winRound(winner){
+        this.winTrack.push(winner);
+        if(this.winTrack.length == 1){
+            this.firstStageWon = winner;
+        }
+    }
+
+    get getRound(){
+        return this.round;
+    }
+    
+    get getUser(){
+        return this.user;
+    }
+    
+    get getRival(){
+        return this.rival;
     }
 }
 
