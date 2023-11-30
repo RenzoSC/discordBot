@@ -1,4 +1,4 @@
-const {SlashCommandBuilder, ActionRowBuilder, ButtonStyle, ButtonBuilder } = require("discord.js");
+const {SlashCommandBuilder, ActionRowBuilder, ButtonStyle, ButtonBuilder, UserFlags } = require("discord.js");
 
 class Player{
     constructor(player, iconImg){
@@ -110,15 +110,11 @@ class Table{
         this.firstStageWon = user;
         this.winTrack = [];
         this.baraja = new Baraja();
+        this.pointsRoundIG = 1;
     }
 
     nextRound(){
-        if(this.round == 3){
-            this.round -=3;
-            this.winTrack = [];
-        }else{
-            this.round +=1;
-        }
+        this.round +=1;
     }
 
     winRound(winner){
@@ -127,6 +123,30 @@ class Table{
             this.firstStageWon = winner;
         }
     }
+    
+    endHand(empate){
+        if(empate){
+            this.firstStageWon.addPoints(this.pointsRoundIG);
+        }else{
+            let counter= 0;
+            for (const u in this.winTrack) {
+                if (u == this.user) {
+                    counter +=1
+                }
+            }
+
+            if(counter == 2){
+                this.user.addPoints(this.pointsRoundIG);
+            }else{
+                this.rival.addPoints(this.pointsRoundIG);
+            }
+        }
+        this.round = 0;
+        this.winTrack = [];
+        this.pointsRoundIG = 1;
+        this.winTrack = [];
+    }
+
 
     get getRound(){
         return this.round;
