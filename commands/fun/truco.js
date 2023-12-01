@@ -1,4 +1,4 @@
-const {SlashCommandBuilder, ActionRowBuilder, ButtonStyle, ButtonBuilder, UserFlags } = require("discord.js");
+const {SlashCommandBuilder, ActionRowBuilder, ButtonStyle, ButtonBuilder, UserFlags, time } = require("discord.js");
 
 class Player{
     constructor(player, iconImg){
@@ -35,6 +35,10 @@ class Player{
 
     get getTotalCards(){
         return this.hand.unused.length;
+    }
+
+    get getCardPoints(){
+        
     }
 }
 
@@ -113,6 +117,10 @@ class Table{
         this.pointsRoundIG = 1;
     }
 
+    startGame(cortar){
+        this.baraja.repartir(this.user, this.rival, cortar);
+    }
+
     nextRound(){
         this.round +=1;
     }
@@ -124,9 +132,9 @@ class Table{
         }
     }
     
-    endHand(empate){
+    endHandNormal(empate,points){
         if(empate){
-            this.firstStageWon.addPoints(this.pointsRoundIG);
+            this.firstStageWon.addPoints(points);
         }else{
             let counter= 0;
             for (const u in this.winTrack) {
@@ -136,9 +144,9 @@ class Table{
             }
 
             if(counter == 2){
-                this.user.addPoints(this.pointsRoundIG);
+                this.user.addPoints(points);
             }else{
-                this.rival.addPoints(this.pointsRoundIG);
+                this.rival.addPoints(points);
             }
         }
         this.round = 0;
@@ -147,6 +155,57 @@ class Table{
         this.winTrack = [];
     }
 
+    endHandNoTruco(caller){
+        this.caller.addPoints(2);
+        this.round = 0;
+        this.winTrack = [];
+        this.pointsRoundIG = 1;
+        this.winTrack = [];
+    }
+
+    
+
+    playEnvido(caller,quiero,call,callerrival){
+        let pointsW, pointsL;
+        if(call == "envido"){
+            pointsW =2;
+            pointsL = 1;
+        }else if(call == "real"){
+            pointsW =3;
+            pointsL = 1;
+        }else if(call == "falta"){
+            pointsW = 15 -callerrival.getPoints;
+            pointsL = 1;
+        }else if(call == "envido2"){
+            pointsW =4;
+            pointsL = 2;
+        }else if(call == "envidoreal"){
+            pointsW =5;
+            pointsL = 2;
+        }else if(call == "realfalta"){
+            pointsW = 15 -callerrival.getPoints;
+            pointsL = 3;
+        }
+
+        if(quiero){
+            if(this.user.getCardPoints < this.rival.getCardPoints){
+                this.rival.addPoints(pointsW);
+            }else if(this.rival.getCardPoints < this.user.getCardPoints){
+                this.user.addPoints(pointsW);
+            }else{
+                caller.addPoints(pointsW);
+            }
+        }else{
+            caller.addPoints(pointsL);
+        }
+    }
+
+    playTruco(quiero, caller){
+        this.pointsRoundIG +=1;
+        if(!quiero){
+            this.endHandNoTruco(caller);
+        }
+    }
 
     get getRound(){
         return this.round;
@@ -161,6 +220,16 @@ class Table{
     }
 }
 
+
+function gif_to_png(url){
+    let newurl = url;
+
+    if (newurl.includes('.gif')){
+        newurl = url.replace('.gif', '.png');
+    }
+    return newurl;
+}
+
 module.exports = {
     data: new SlashCommandBuilder()
     .setName('truco')
@@ -168,6 +237,41 @@ module.exports = {
     .addUserOption((option)=>option.setName("friend").setDescription("Pana para jugar al truco").setRequired(true)),
 
     async execute(interaction){
+        const user = interaction.user;
+        const rival = interaction.options.getUser('friend');
+        const iconUser =  gif_to_png(user.avatarURL({extension: 'png'}));
+        const iconRival =  gif_to_png(rival.avatarURL({extension: 'png'}));
         
+        let game = new Table(user, iconUser, rival, iconRival);
+        
+        const cortar = new ButtonBuilder()
+        .setCustomId('cortar')
+        .setStyle(ButtonStyle.Primary)
+        .setEmoji('🟢');
+
+        const nocortar = new ButtonBuilder()
+        .setCustomId('nocortar')
+        .setStyle(ButtonStyle.Primary)
+        .setEmoji('🔴');
+
+        const cortarRow = new ActionRowBuilder()
+        .addComponents(cortar,nocortar);
+
+        const rivalresponse = await interaction.reply({
+            content:`${rival}\nVas a cortar o no?\n`,
+            components : [cortarRow],
+        })
+
+        const collectorRivalFilter = (i) => i.user.id == rival.id;
+
+        const cortarInteraction = await rivalresponse.awaitMessageComponent({ collectorRivalFilter, time: 60000 });
+
+        const respCortar = cortarInteraction.customId;
+
+        if(respCortar == "cortar"){
+            game.startGame(true);
+        }else{
+            game.startGame(false);
+        }
     }
 }
