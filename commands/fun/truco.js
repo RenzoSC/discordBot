@@ -73,8 +73,8 @@ class Baraja{
         const palos = ['bastos', 'copas', 'espadas', 'oros'];
         const valores = [1,2,3,4,5,6,7,10,11,12];
 
-        for (const palo in palos){
-            for(const valor in valores){
+        for (const palo of palos){
+            for(const valor of valores){
                 this.cartas.push(new Card(palo,valor));
             }
         }
@@ -118,6 +118,7 @@ class Table{
     }
 
     startGame(cortar){
+        this.baraja.mezclar();
         this.baraja.repartir(this.user, this.rival, cortar);
     }
 
@@ -262,16 +263,37 @@ module.exports = {
             components : [cortarRow],
         })
 
-        const collectorRivalFilter = (i) => i.user.id == rival.id;
+        const collectorRivalFilter = (i) => i.user.id == rival.id && i.user.id != user.id;
 
-        const cortarInteraction = await rivalresponse.awaitMessageComponent({ collectorRivalFilter, time: 60000 });
+        try{
+            const cortarInteraction = await rivalresponse.awaitMessageComponent({ collectorRivalFilter, componentType: 2, time: 60000 });
 
-        const respCortar = cortarInteraction.customId;
 
-        if(respCortar == "cortar"){
-            game.startGame(true);
-        }else{
-            game.startGame(false);
+            const respCortar = cortarInteraction.customId;
+
+            if(respCortar == "cortar"){
+                game.startGame(true);
+                cortarInteraction.update({
+                    content: "Cortamos la mano!",
+                    components: []
+                });
+            }else{
+                game.startGame(false);
+                cortarInteraction.update({
+                    content: "No cortamos la mano!",
+                    components: []
+                })
+            }
+            
+        }catch(e){
+            console.log(e);
+            await interaction.editReply({ content: 'Confirmation not received within 1 minute, cancelling', components: [] });
         }
+
+
+        console.log("\nrival: ");
+        console.log(game.getRival.getHand);
+        console.log("\nuser: ");
+        console.log(game.getUser.getHand);
     }
 }

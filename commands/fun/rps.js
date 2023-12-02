@@ -38,7 +38,7 @@ module.exports = {
 
         const emoji = {'rock':'🪨', 'scissors':'✂️','paper':'🧻'}
         
-            const waitForSelections = async ()=>{
+        const waitForSelections = async ()=>{
             try{
                 const selections = new Map();
 
