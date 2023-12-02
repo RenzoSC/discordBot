@@ -23,8 +23,6 @@ module.exports ={
         let user_img = gif_to_png(interaction.user.avatarURL({extension: 'png'}));
         let target_img = gif_to_png(interaction.options.getUser('friend').avatarURL({extension: 'png'}))
 
-        console.log(user_img);
-        console.log(target_img);
         const background = await Canvas.loadImage('./images/uwu.jpg');
 
         const heart = await Canvas.loadImage('./images/heart.png');

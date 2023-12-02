@@ -1,4 +1,6 @@
-const {SlashCommandBuilder, ActionRowBuilder, ButtonStyle, ButtonBuilder, UserFlags, time } = require("discord.js");
+const {SlashCommandBuilder, ActionRowBuilder, ButtonStyle, ButtonBuilder, UserFlags, AttachmentBuilder } = require("discord.js");
+
+const Canvas = require('@napi-rs/canvas');
 
 class Player{
     constructor(player, iconImg){
@@ -208,6 +210,17 @@ class Table{
         }
     }
 
+    async showTable(interaction){
+        const canvas = Canvas.createCanvas(700,400);
+        const context = canvas.getContext("2d");
+
+        const bgtable = await Canvas.loadImage('./images/table.jpg');
+        context.drawImage(bgtable, 0, 0, canvas.width, canvas.height);
+
+        const attachment = new AttachmentBuilder(await canvas.encode('png'), { name: 'profile-image.png' });
+        await interaction.followUp({files:[attachment]});
+    }
+
     get getRound(){
         return this.round;
     }
@@ -284,6 +297,8 @@ module.exports = {
                     components: []
                 })
             }
+
+            game.showTable(interaction);
             
         }catch(e){
             console.log(e);
