@@ -48,7 +48,7 @@ class Card{
     constructor(palo,value){
         this.type = palo;
         this.value = value;
-        this.image = `./images/cards/${palo}/${value}`;
+        this.image = `./images/cards/${palo}/${value}.jpg`;
     }
 
     get getType(){
@@ -215,8 +215,28 @@ class Table{
         const context = canvas.getContext("2d");
 
         const bgtable = await Canvas.loadImage('./images/table.jpg');
-        context.drawImage(bgtable, 0, 0, canvas.width, canvas.height);
+        const cartadef= await Canvas.loadImage('./images/dorso.jpg');
 
+        let cartaUser;
+        let cartaRival;
+
+        context.imageSmoothingEnabled = true;
+        context.drawImage(bgtable, 0, 0, canvas.width, canvas.height);
+        for (let i = 0; i < this.user.getHand.length; i++) {
+            context.drawImage(cartadef,200 + 110*i, 50, 70, 110);
+        }
+        for (let i = 0; i < this.user.getUsedHand.length; i++) {
+            cartaUser = await Canvas.loadImage(this.user.getHand[i].getImage);
+            context.drawImage(cartaUser,200 + 110*i +110*this.user.getHand.length, 50, 70, 110);
+        }
+        
+        for (let i = 0; i < this.rival.getHand.length; i++) {
+            context.drawImage(cartadef,200 + 110*i, canvas.height - 160, 70, 110);
+        }
+        for (let i = 0; i < this.rival.getUsedHand.length; i++) {
+            cartaRival = await Canvas.loadImage(this.user.getHand[i].getImage);
+            context.drawImage(cartaRival,200 + 110*i +110*this.user.getHand.length, canvas.height-160, 70, 110);
+        }
         const attachment = new AttachmentBuilder(await canvas.encode('png'), { name: 'profile-image.png' });
         await interaction.followUp({files:[attachment]});
     }
@@ -298,7 +318,7 @@ module.exports = {
                 })
             }
 
-            game.showTable(interaction);
+            await game.showTable(interaction);
             
         }catch(e){
             console.log(e);
