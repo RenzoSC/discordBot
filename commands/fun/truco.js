@@ -1,4 +1,4 @@
-const {SlashCommandBuilder, ActionRowBuilder, ButtonStyle, ButtonBuilder, UserFlags, AttachmentBuilder } = require("discord.js");
+const {SlashCommandBuilder, ActionRowBuilder, ButtonStyle, ButtonBuilder, UserFlags, AttachmentBuilder,DMChannel } = require("discord.js");
 
 const Canvas = require('@napi-rs/canvas');
 
@@ -241,6 +241,30 @@ class Table{
         await interaction.followUp({files:[attachment]});
     }
 
+    async sendCardsTo(user, player){
+        const canvas = Canvas.createCanvas(600,400);
+        const context = canvas.getContext("2d");
+
+        const dmUser = await user.createDM(false);
+        let playerCards = player.getHand;
+        
+        const bghand = await Canvas.loadImage('./images/table.jpg');
+        
+        context.drawImage(bghand, 0,0, canvas.width, canvas.height);
+        let i=0;
+        for(let card of playerCards){
+
+            let cardImg = await Canvas.loadImage(card.getImage);
+            context.drawImage(cardImg, 100+160*i,120,110,160);
+            i++;
+        }
+        const attachment = new AttachmentBuilder(await canvas.encode('png'), {name:'cards.png'});
+        
+        dmUser.send({
+            files:[attachment],
+        });
+    }
+
     get getRound(){
         return this.round;
     }
@@ -319,16 +343,13 @@ module.exports = {
             }
 
             await game.showTable(interaction);
+
+            await game.sendCardsTo(user, game.user);
+            await game.sendCardsTo(rival, game.rival);
             
         }catch(e){
             console.log(e);
             await interaction.editReply({ content: 'Confirmation not received within 1 minute, cancelling', components: [] });
         }
-
-
-        console.log("\nrival: ");
-        console.log(game.getRival.getHand);
-        console.log("\nuser: ");
-        console.log(game.getUser.getHand);
     }
 }
