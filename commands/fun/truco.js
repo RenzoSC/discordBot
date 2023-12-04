@@ -1,4 +1,4 @@
-const {SlashCommandBuilder, ActionRowBuilder, ButtonStyle, ButtonBuilder, UserFlags, AttachmentBuilder,DMChannel } = require("discord.js");
+const {SlashCommandBuilder, ActionRowBuilder, ButtonStyle, ButtonBuilder, AttachmentBuilder, EmbedBuilder, StringSelectMenuBuilder, StringSelectMenuOptionBuilder} = require("discord.js");
 
 const Canvas = require('@napi-rs/canvas');
 
@@ -19,8 +19,8 @@ class Player{
     }
 
     useCard(card){
-        const eliminated = this.hand.unused.splice(card,1);
-        this.hand.used.concat(eliminated);
+        this.hand.unused = this.hand.unused.filter(x => x!= card);
+        this.hand.used.push(card);
     }
 
     get getPoints(){
@@ -235,7 +235,7 @@ class Table{
         }
         for (let i = 0; i < this.rival.getUsedHand.length; i++) {
             cartaRival = await Canvas.loadImage(this.user.getHand[i].getImage);
-            context.drawImage(cartaRival,200 + 110*i +110*this.user.getHand.length, canvas.height-160, 70, 110);
+            context.drawImage(cartaRival,200 + 110*i +110*this.rival.getHand.length, canvas.height-160, 70, 110);
         }
         const attachment = new AttachmentBuilder(await canvas.encode('png'), { name: 'profile-image.png' });
         await interaction.followUp({files:[attachment]});
@@ -346,7 +346,47 @@ module.exports = {
 
             await game.sendCardsTo(user, game.user);
             await game.sendCardsTo(rival, game.rival);
+
+            let cardButtonSelect = new StringSelectMenuBuilder()
+			.setCustomId('starter')
+			.setPlaceholder('Make a selection!')
+			.addOptions(
+				new StringSelectMenuOptionBuilder()
+					.setLabel('Primera carta')
+					.setValue('0'),
+				new StringSelectMenuOptionBuilder()
+					.setLabel('Segunda carta')
+					.setValue('1'),
+				new StringSelectMenuOptionBuilder()
+					.setLabel('Tercera carta')
+					.setValue('2'),
+                new StringSelectMenuOptionBuilder()
+					.setLabel('Envido')
+					.setValue('envido'),
+                new StringSelectMenuOptionBuilder()
+					.setLabel('Truco')
+					.setValue('truco'),
+                new StringSelectMenuOptionBuilder()
+					.setLabel('Salir')
+					.setValue('salir'),
+			);
+
+            let firstRoundRow = new ActionRowBuilder()
+            .setComponents(cardButtonSelect)
             
+            let firstRoundEmbed = new EmbedBuilder()
+            .setTitle('Primera mano!')
+            .setColor('#FFDE33')
+            .setDescription(`${user} vs ${rival} jugando un trucardo`)
+
+            await interaction.followUp(
+                {
+                    content:`${rival} elige tu jugada:`,
+                    components:[firstRoundRow],
+                    embeds:[firstRoundEmbed]
+                }
+            )
+
         }catch(e){
             console.log(e);
             await interaction.editReply({ content: 'Confirmation not received within 1 minute, cancelling', components: [] });
