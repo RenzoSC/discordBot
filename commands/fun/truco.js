@@ -117,6 +117,7 @@ class Table{
         this.winTrack = [];
         this.baraja = new Baraja();
         this.pointsRoundIG = 1;
+        this.pointsEnvido ={"envpoints":0,"toplayer":this.user};
     }
 
     startGame(cortar){
@@ -167,7 +168,9 @@ class Table{
     }
 
     
+    calcPointsInGame(){
 
+    }
     playEnvido(caller,quiero,call,callerrival){
         let pointsW, pointsL;
         if(call == "envido"){
