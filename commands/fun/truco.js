@@ -241,7 +241,8 @@ class Table{
             context.drawImage(cartaRival,200 + 110*i +110*this.rival.getHand.length, canvas.height-160, 70, 110);
         }
         const attachment = new AttachmentBuilder(await canvas.encode('png'), { name: 'profile-image.png' });
-        await interaction.followUp({files:[attachment]});
+        const respuesta = await interaction.followUp({files:[attachment]});
+        return respuesta;
     }
 
     async sendCardsTo(user, player){
@@ -324,6 +325,7 @@ module.exports = {
         })
 
         const collectorRivalFilter = (i) => i.user.id == rival.id && i.user.id != user.id;
+        const collectorUserFilter = (i) => i.user.id != rival.id && i.user.id == user.id;
 
         try{
             const cortarInteraction = await rivalresponse.awaitMessageComponent({ collectorRivalFilter, componentType: 2, time: 60000 });
@@ -345,7 +347,7 @@ module.exports = {
                 })
             }
 
-            await game.showTable(interaction);
+            const msgTable = await game.showTable(interaction);
 
             await game.sendCardsTo(user, game.user);
             await game.sendCardsTo(rival, game.rival);
@@ -367,6 +369,12 @@ module.exports = {
 					.setLabel('Envido')
 					.setValue('envido'),
                 new StringSelectMenuOptionBuilder()
+					.setLabel('Real envido')
+					.setValue('real envido'),
+                new StringSelectMenuOptionBuilder()
+					.setLabel('Falta envido')
+					.setValue('falta envido'),
+                new StringSelectMenuOptionBuilder()
 					.setLabel('Truco')
 					.setValue('truco'),
                 new StringSelectMenuOptionBuilder()
@@ -382,13 +390,51 @@ module.exports = {
             .setColor('#FFDE33')
             .setDescription(`${user} vs ${rival} jugando un trucardo`)
 
-            await interaction.followUp(
+            const round1response = await msgTable.reply(
                 {
                     content:`${rival} elige tu jugada:`,
                     components:[firstRoundRow],
                     embeds:[firstRoundEmbed]
                 }
             )
+            const round1RivalInteraction = await round1response.awaitMessageComponent({ collectorRivalFilter, componentType: 3, time: 60000 });
+            
+            if(round1RivalInteraction.values == 'envido' || round1RivalInteraction.values == 'real envido' || round1RivalInteraction.values == 'falta envido'){
+                
+                const envSelectResponse= new StringSelectMenuBuilder()
+                .setCustomId('envResp')
+                .setPlaceholder('Select your response!')
+                .addOptions(
+                    new StringSelectMenuOptionBuilder()
+                        .setLabel('Acepto')
+                        .setValue('acepto'),
+                    new StringSelectMenuOptionBuilder()
+                        .setLabel('No acepto')
+                        .setValue('rechazo'),
+                    new StringSelectMenuOptionBuilder()
+                        .setLabel('Envido')
+                        .setValue('envido'),
+                    new StringSelectMenuOptionBuilder()
+                        .setLabel('Real envido')
+                        .setValue('real envido'),
+                    new StringSelectMenuOptionBuilder()
+                        .setLabel('Falta envido')
+                        .setValue('falta envido'),
+                    new StringSelectMenuOptionBuilder()
+                        .setLabel('Salir')
+                        .setValue('salir'),
+			    );
+                
+                const envRow = new ActionRowBuilder()
+                .addComponents(envSelectResponse);
+                
+                const userResponseEnv = round1RivalInteraction.reply(
+                    {
+                        content:`aceptas el ${round1RivalInteraction.values}`,
+                        components:[envRow],
+                    }
+                )
+            }
 
         }catch(e){
             console.log(e);
