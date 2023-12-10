@@ -1,4 +1,4 @@
-const {SlashCommandBuilder, ActionRowBuilder, ButtonStyle, ButtonBuilder, AttachmentBuilder, EmbedBuilder, StringSelectMenuBuilder, StringSelectMenuOptionBuilder} = require("discord.js");
+const {SlashCommandBuilder, ActionRowBuilder, ButtonStyle, ButtonBuilder, AttachmentBuilder, EmbedBuilder, StringSelectMenuBuilder, StringSelectMenuOptionBuilder, NewsChannel} = require("discord.js");
 
 const Canvas = require('@napi-rs/canvas');
 
@@ -465,8 +465,7 @@ module.exports = {
                     .setLabel('Salir')
                     .setValue('salir'),
             );
-
-            if(round1RivalInteraction.values == 'envido' || round1RivalInteraction.values == 'real envido' || round1RivalInteraction.values == 'falta envido'){
+            if(round1RivalInteraction.values == 'envido'){ //first round envido
                 
                 const envRow = new ActionRowBuilder()
                 .addComponents(envSelectResponse);
@@ -482,8 +481,7 @@ module.exports = {
                     game.playEnvido(true);
                 }else if(userResponseEnv.values == 'rechazo'){
                     game.playEnvido(false);
-                }else if(userResponseEnv.values == 'envido'){
-                    game.playEnvido(true);
+                }else if(userResponseEnv.values == 'envido'){   //envido envido
 
                     const envRow2 = new ActionRowBuilder()
                     .addComponents(envSelectResponse2);
@@ -501,9 +499,8 @@ module.exports = {
                         game.playEnvido(true);
                     }else if(rivalResponseEnv2.values == 'rechazo'){
                         game.playEnvido(false);
-                    }else if(rivalResponseEnv2.values == 'real envido'){
-                        game.playRenvido(true);
-
+                    }else if(rivalResponseEnv2.values == 'real envido'){   //envido envido real envido
+                        game.playEnvido(true);
                         const envRow3 = new ActionRowBuilder()
                         .addComponents(envSelectResponse3);
                         
@@ -513,18 +510,146 @@ module.exports = {
                                 components:[envRow3],
                             }
                         )
+                        
+                        const userResponseEnv3 = userResponseEnv3msg.awaitMessageComponent({collectorUserFilter, componentType:3, time:6000});
 
-                        if(userResponseEnv3msg.values == 'acepto'){
+                        if(userResponseEnv3.values == 'acepto'){
                             game.playRenvido(true);
-                        }else if(userResponseEnv3msg.values == 'rechazo'){
+                        }else if(userResponseEnv3.values == 'rechazo'){
                             game.playRenvido(false);
-                        }else if(userResponseEnv3msg.values == 'falta envido'){
+                        }else if(userResponseEnv3.values == 'falta envido'){  //envido envido real envido falta envido
+                            game.playRenvido(true);
                             game.playFenvido(true);
                         }
 
-                    }else if(rivalResponseEnv2.values == 'falta envido'){
-                        game.playFenvido(true);
+                    }else if(rivalResponseEnv2.values == 'falta envido'){   //envido envido falta envido
+                        game.playEnvido(true);
+
+                        const envRow4 = new ActionRowBuilder()
+                        .addComponents(envSelectResponse4);
+                        
+                        const rivalResponseEnv4msg = rivalResponseEnv2.reply(
+                            {
+                                content:`aceptas el ${userResponseEnv.values}`,
+                                components:[envRow4],
+                            }
+                        )
+
+                        const rivalResponseEnv4 = rivalResponseEnv4msg.awaitMessageComponent({collectorUserFilter, componentType:3, time:6000})
+                        
+                        if(rivalResponseEnv4.values == 'acepto'){
+                            game.playFenvido(true);
+                        }else if(rivalResponseEnv4.values == 'rechazo'){
+                            game.playFenvido(false);
+                        }
                     }
+                }else if(userResponseEnv.values == 'real envido'){  //envido real envido
+                    game.playEnvido(true);
+                    const envRow3 = new ActionRowBuilder()
+                    .addComponents(envSelectResponse3);
+
+                    const rivalResponseEnv3msg = userResponseEnv.reply({
+                        content:`aceptas el ${userResponseEnv.values}`,
+                        components:[envRow3],
+                    });
+
+                    const rivalResponseEnv3 = rivalResponseEnv3msg.awaitMessageComponent({collectorRivalFilter, componentType:3,time:6000});
+
+                    if(rivalResponseEnv3.values == 'acepto'){
+                        game.playRenvido(true);
+                    }else if (rivalResponseEnv3.values == 'rechazo'){
+                        game.playRenvido(false);
+                    }else if( rivalResponseEnv3.values == 'falta envido'){ //envido real envido falta envido
+                        game.playRenvido(true);
+
+                        const envRow4 = new ActionRowBuilder()
+                        .addComponents(envSelectResponse4);
+
+                        const userResponseEnv4msg = rivalResponseEnv3.reply({
+                            content:`aceptas el ${rivalResponseEnv3.values}`,
+                            components:[envRow4],
+                        })
+
+                        const userResponseEnv4 = userResponseEnv4msg.awaitMessageComponent({collectorUserFilter, componentType:3,time:6000});
+
+                        if(userResponseEnv4.values == 'acepto'){
+                            game.playFenvido(true);
+                        }else if(userResponseEnv4.values == ' rechazo'){
+                            game.playFenvido(false);
+                        }
+                    }
+                }else if(userResponseEnv.values == 'falta envido'){  //envido falta envido
+                    game.playEnvido(true);
+
+                    const envRow4 = new ActionRowBuilder()
+                    .addComponents(envSelectResponse4);
+
+                    const rivalResponseEnv4msg = userResponseEnv.reply({
+                        content:`aceptas el ${userResponseEnv.values}`,
+                            components:[envRow4],
+                    })
+
+                    const rivalResponseEnv4 = rivalResponseEnv4msg.awaitMessageComponent({collectorRivalFilter, componentType:3,time:6000});
+
+                    if(rivalResponseEnv4.values == 'acepto'){
+                        game.playFenvido(true);
+                    }else if(rivalResponseEnv4.values == 'rechazo'){
+                        game.playFenvido(false);
+                    }
+                }
+            }else if(round1RivalInteraction.values == 'real envido'){ // first round real envido
+                const envRow3 = new ActionRowBuilder()
+                .addComponents(envSelectResponse3);
+
+                const rivalResponseEnv3msg = round1RivalInteraction.reply(
+                    {
+                        content:`aceptas el ${round1RivalInteraction.values}`,
+                        components:[envRow3],
+                    }
+                )
+
+                const rivalResponseEnv3 = rivalResponseEnv3msg.awaitMessageComponent({collectorRivalFilter, componentType:3,time:6000});
+                
+                if(rivalResponseEnv3.values == 'acepto'){
+                    game.playRenvido(true);
+                }else if(rivalResponseEnv3.values =='rechazo'){
+                    game.playRenvido(false);
+                }else if(rivalResponseEnv3.values == 'falta envido'){  //real envido falta envido
+
+                    const envRow4 = new ActionRowBuilder()
+                    .addComponents(envSelectResponse4);
+
+                    const userResponseEnv4msg = rivalResponseEnv3.reply({
+                        content:`aceptas el ${rivalResponseEnv3.values}`,
+                        components:[envRow4],
+                    })
+
+                    const userResponseEnv4 = userResponseEnv4msg.awaitMessageComponent({collectorUserFilter, componentType:3, time:6000});
+
+                    if(userResponseEnv4.values == 'acepto'){
+                        game.playFenvido(true);
+                    }else if(userResponseEnv4.values == 'rechazo'){
+                        game.playFenvido(false);
+                    }
+                }
+
+            }else if(round1RivalInteraction.values == 'falta envido'){// first round falta envido
+                const envRow4 = new ActionRowBuilder()
+                .addComponents(envSelectResponse4);
+
+                const rivalResponseEnv3msg = round1RivalInteraction.reply(
+                    {
+                        content:`aceptas el ${round1RivalInteraction.values}`,
+                        components:[envRow4],
+                    }
+                )
+
+                const rivalResponseEnv3 = rivalResponseEnv3msg.awaitMessageComponent({collectorRivalFilter, componentType:3,time:6000});
+                
+                if(rivalResponseEnv3.values == 'acepto'){
+                    game.playRenvido(true);
+                }else if(rivalResponseEnv3.values =='rechazo'){
+                    game.playRenvido(false);
                 }
             }
 
