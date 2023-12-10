@@ -171,38 +171,28 @@ class Table{
     calcPointsInGame(){
 
     }
-    playEnvido(caller,quiero,call,callerrival){
-        let pointsW, pointsL;
-        if(call == "envido"){
-            pointsW =2;
-            pointsL = 1;
-        }else if(call == "real"){
-            pointsW =3;
-            pointsL = 1;
-        }else if(call == "falta"){
-            pointsW = 15 -callerrival.getPoints;
-            pointsL = 1;
-        }else if(call == "envido2"){
-            pointsW =4;
-            pointsL = 2;
-        }else if(call == "envidoreal"){
-            pointsW =5;
-            pointsL = 2;
-        }else if(call == "realfalta"){
-            pointsW = 15 -callerrival.getPoints;
-            pointsL = 3;
-        }
 
+    playEnvido(quiero){
         if(quiero){
-            if(this.user.getCardPoints < this.rival.getCardPoints){
-                this.rival.addPoints(pointsW);
-            }else if(this.rival.getCardPoints < this.user.getCardPoints){
-                this.user.addPoints(pointsW);
-            }else{
-                caller.addPoints(pointsW);
-            }
+            this.pointsEnvido += 2;
         }else{
-            caller.addPoints(pointsL);
+            this.pointsEnvido +=1;
+        }
+    }
+
+    playRenvido(quiero){
+        if(quiero){
+            this.pointsEnvido += 3;
+        }else{
+            this.pointsEnvido +=1;
+        }
+    }
+
+    playFenvido(quiero, against){
+        if(quiero){
+            this.pointsEnvido = 15 - against.getPoints;
+        }else{
+            this.pointsEnvido +=1;
         }
     }
 
@@ -399,41 +389,143 @@ module.exports = {
             )
             const round1RivalInteraction = await round1response.awaitMessageComponent({ collectorRivalFilter, componentType: 3, time: 60000 });
             
-            if(round1RivalInteraction.values == 'envido' || round1RivalInteraction.values == 'real envido' || round1RivalInteraction.values == 'falta envido'){
-                
-                const envSelectResponse= new StringSelectMenuBuilder()
+            const envSelectResponse= new StringSelectMenuBuilder()
                 .setCustomId('envResp')
                 .setPlaceholder('Select your response!')
                 .addOptions(
-                    new StringSelectMenuOptionBuilder()
-                        .setLabel('Acepto')
-                        .setValue('acepto'),
-                    new StringSelectMenuOptionBuilder()
-                        .setLabel('No acepto')
-                        .setValue('rechazo'),
-                    new StringSelectMenuOptionBuilder()
-                        .setLabel('Envido')
-                        .setValue('envido'),
-                    new StringSelectMenuOptionBuilder()
-                        .setLabel('Real envido')
-                        .setValue('real envido'),
-                    new StringSelectMenuOptionBuilder()
-                        .setLabel('Falta envido')
-                        .setValue('falta envido'),
-                    new StringSelectMenuOptionBuilder()
-                        .setLabel('Salir')
-                        .setValue('salir'),
-			    );
+                new StringSelectMenuOptionBuilder()
+                    .setLabel('Acepto')
+                    .setValue('acepto'),
+                new StringSelectMenuOptionBuilder()
+                    .setLabel('No acepto')
+                    .setValue('rechazo'),
+                new StringSelectMenuOptionBuilder()
+                    .setLabel('Envido')
+                    .setValue('envido'),
+                new StringSelectMenuOptionBuilder()
+                    .setLabel('Real envido')
+                    .setValue('real envido'),
+                new StringSelectMenuOptionBuilder()
+                    .setLabel('Falta envido')
+                    .setValue('falta envido'),
+                new StringSelectMenuOptionBuilder()
+                    .setLabel('Salir')
+                    .setValue('salir'),
+			);
+
+            const envSelectResponse2= new StringSelectMenuBuilder()
+                .setCustomId('envResp')
+                .setPlaceholder('Select your response!')
+                .addOptions(
+                new StringSelectMenuOptionBuilder()
+                    .setLabel('Acepto')
+                    .setValue('acepto'),
+                new StringSelectMenuOptionBuilder()
+                    .setLabel('No acepto')
+                    .setValue('rechazo'),
+                new StringSelectMenuOptionBuilder()
+                    .setLabel('Real envido')
+                    .setValue('real envido'),
+                new StringSelectMenuOptionBuilder()
+                    .setLabel('Falta envido')
+                    .setValue('falta envido'),
+                new StringSelectMenuOptionBuilder()
+                    .setLabel('Salir')
+                    .setValue('salir'),
+            );
+
+            const envSelectResponse3= new StringSelectMenuBuilder()
+                .setCustomId('envResp')
+                .setPlaceholder('Select your response!')
+                .addOptions(
+                new StringSelectMenuOptionBuilder()
+                    .setLabel('Acepto')
+                    .setValue('acepto'),
+                new StringSelectMenuOptionBuilder()
+                    .setLabel('No acepto')
+                    .setValue('rechazo'),
+                new StringSelectMenuOptionBuilder()
+                    .setLabel('Falta envido')
+                    .setValue('falta envido'),
+                new StringSelectMenuOptionBuilder()
+                    .setLabel('Salir')
+                    .setValue('salir'),
+            );
+            const envSelectResponse4= new StringSelectMenuBuilder()
+                .setCustomId('envResp')
+                .setPlaceholder('Select your response!')
+                .addOptions(
+                new StringSelectMenuOptionBuilder()
+                    .setLabel('Acepto')
+                    .setValue('acepto'),
+                new StringSelectMenuOptionBuilder()
+                    .setLabel('No acepto')
+                    .setValue('rechazo'),
+                new StringSelectMenuOptionBuilder()
+                    .setLabel('Salir')
+                    .setValue('salir'),
+            );
+
+            if(round1RivalInteraction.values == 'envido' || round1RivalInteraction.values == 'real envido' || round1RivalInteraction.values == 'falta envido'){
                 
                 const envRow = new ActionRowBuilder()
                 .addComponents(envSelectResponse);
                 
-                const userResponseEnv = round1RivalInteraction.reply(
+                const userResponsemsg = round1RivalInteraction.reply(
                     {
                         content:`aceptas el ${round1RivalInteraction.values}`,
                         components:[envRow],
                     }
                 )
+                const userResponseEnv = userResponsemsg.awaitMessageComponent({collectorUserFilter,componentType:3,time:6000,});
+                if(userResponseEnv.values == 'acepto' ){
+                    game.playEnvido(true);
+                }else if(userResponseEnv.values == 'rechazo'){
+                    game.playEnvido(false);
+                }else if(userResponseEnv.values == 'envido'){
+                    game.playEnvido(true);
+
+                    const envRow2 = new ActionRowBuilder()
+                    .addComponents(envSelectResponse2);
+
+                    const rivalResponseEnv2msg = userResponseEnv.reply(
+                        {
+                            content:`aceptas el ${userResponseEnv.values}`,
+                            components:[envRow2],
+                        }
+                    )
+
+                    const rivalResponseEnv2 = rivalResponseEnv2msg.awaitMessageComponent({collectorRivalFilter, componentType:3,time:6000});
+
+                    if(rivalResponseEnv2.values == 'acepto'){
+                        game.playEnvido(true);
+                    }else if(rivalResponseEnv2.values == 'rechazo'){
+                        game.playEnvido(false);
+                    }else if(rivalResponseEnv2.values == 'real envido'){
+                        game.playRenvido(true);
+
+                        const envRow3 = new ActionRowBuilder()
+                        .addComponents(envSelectResponse3);
+                        
+                        const userResponseEnv3msg = rivalResponseEnv2.reply(
+                            {
+                                content:`aceptas el ${userResponseEnv.values}`,
+                                components:[envRow3],
+                            }
+                        )
+
+                        if(userResponseEnv3msg.values == 'acepto'){
+                            game.playRenvido(true);
+                        }else if(userResponseEnv3msg.values == 'rechazo'){
+                            game.playRenvido(false);
+                        }else if(userResponseEnv3msg.values == 'falta envido'){
+                            game.playFenvido(true);
+                        }
+
+                    }else if(rivalResponseEnv2.values == 'falta envido'){
+                        game.playFenvido(true);
+                    }
+                }
             }
 
         }catch(e){
