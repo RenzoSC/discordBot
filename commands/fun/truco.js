@@ -470,13 +470,13 @@ module.exports = {
                 const envRow = new ActionRowBuilder()
                 .addComponents(envSelectResponse);
                 
-                const userResponsemsg = round1RivalInteraction.reply(
+                const userResponsemsg = await round1RivalInteraction.reply(
                     {
                         content:`aceptas el ${round1RivalInteraction.values}`,
                         components:[envRow],
                     }
                 )
-                const userResponseEnv = userResponsemsg.awaitMessageComponent({collectorUserFilter,componentType:3,time:6000,});
+                const userResponseEnv = await userResponsemsg.awaitMessageComponent({collectorUserFilter,componentType:3,time:6000,});
                 if(userResponseEnv.values == 'acepto' ){
                     game.playEnvido(true);
                 }else if(userResponseEnv.values == 'rechazo'){
@@ -486,14 +486,14 @@ module.exports = {
                     const envRow2 = new ActionRowBuilder()
                     .addComponents(envSelectResponse2);
 
-                    const rivalResponseEnv2msg = userResponseEnv.reply(
+                    const rivalResponseEnv2msg = await userResponseEnv.reply(
                         {
                             content:`aceptas el ${userResponseEnv.values}`,
                             components:[envRow2],
                         }
                     )
 
-                    const rivalResponseEnv2 = rivalResponseEnv2msg.awaitMessageComponent({collectorRivalFilter, componentType:3,time:6000});
+                    const rivalResponseEnv2 = await rivalResponseEnv2msg.awaitMessageComponent({collectorRivalFilter, componentType:3,time:6000});
 
                     if(rivalResponseEnv2.values == 'acepto'){
                         game.playEnvido(true);
@@ -504,14 +504,14 @@ module.exports = {
                         const envRow3 = new ActionRowBuilder()
                         .addComponents(envSelectResponse3);
                         
-                        const userResponseEnv3msg = rivalResponseEnv2.reply(
+                        const userResponseEnv3msg = await rivalResponseEnv2.reply(
                             {
                                 content:`aceptas el ${userResponseEnv.values}`,
                                 components:[envRow3],
                             }
                         )
                         
-                        const userResponseEnv3 = userResponseEnv3msg.awaitMessageComponent({collectorUserFilter, componentType:3, time:6000});
+                        const userResponseEnv3 = await userResponseEnv3msg.awaitMessageComponent({collectorUserFilter, componentType:3, time:6000});
 
                         if(userResponseEnv3.values == 'acepto'){
                             game.playRenvido(true);
@@ -528,14 +528,14 @@ module.exports = {
                         const envRow4 = new ActionRowBuilder()
                         .addComponents(envSelectResponse4);
                         
-                        const rivalResponseEnv4msg = rivalResponseEnv2.reply(
+                        const rivalResponseEnv4msg = await rivalResponseEnv2.reply(
                             {
                                 content:`aceptas el ${userResponseEnv.values}`,
                                 components:[envRow4],
                             }
                         )
 
-                        const rivalResponseEnv4 = rivalResponseEnv4msg.awaitMessageComponent({collectorUserFilter, componentType:3, time:6000})
+                        const rivalResponseEnv4 = await rivalResponseEnv4msg.awaitMessageComponent({collectorUserFilter, componentType:3, time:6000})
                         
                         if(rivalResponseEnv4.values == 'acepto'){
                             game.playFenvido(true);
@@ -548,12 +548,12 @@ module.exports = {
                     const envRow3 = new ActionRowBuilder()
                     .addComponents(envSelectResponse3);
 
-                    const rivalResponseEnv3msg = userResponseEnv.reply({
+                    const rivalResponseEnv3msg = await userResponseEnv.reply({
                         content:`aceptas el ${userResponseEnv.values}`,
                         components:[envRow3],
                     });
 
-                    const rivalResponseEnv3 = rivalResponseEnv3msg.awaitMessageComponent({collectorRivalFilter, componentType:3,time:6000});
+                    const rivalResponseEnv3 = await rivalResponseEnv3msg.awaitMessageComponent({collectorRivalFilter, componentType:3,time:6000});
 
                     if(rivalResponseEnv3.values == 'acepto'){
                         game.playRenvido(true);
@@ -565,12 +565,12 @@ module.exports = {
                         const envRow4 = new ActionRowBuilder()
                         .addComponents(envSelectResponse4);
 
-                        const userResponseEnv4msg = rivalResponseEnv3.reply({
+                        const userResponseEnv4msg = await rivalResponseEnv3.reply({
                             content:`aceptas el ${rivalResponseEnv3.values}`,
                             components:[envRow4],
                         })
 
-                        const userResponseEnv4 = userResponseEnv4msg.awaitMessageComponent({collectorUserFilter, componentType:3,time:6000});
+                        const userResponseEnv4 = await userResponseEnv4msg.awaitMessageComponent({collectorUserFilter, componentType:3,time:6000});
 
                         if(userResponseEnv4.values == 'acepto'){
                             game.playFenvido(true);
@@ -584,12 +584,12 @@ module.exports = {
                     const envRow4 = new ActionRowBuilder()
                     .addComponents(envSelectResponse4);
 
-                    const rivalResponseEnv4msg = userResponseEnv.reply({
+                    const rivalResponseEnv4msg = await userResponseEnv.reply({
                         content:`aceptas el ${userResponseEnv.values}`,
                             components:[envRow4],
                     })
 
-                    const rivalResponseEnv4 = rivalResponseEnv4msg.awaitMessageComponent({collectorRivalFilter, componentType:3,time:6000});
+                    const rivalResponseEnv4 = await rivalResponseEnv4msg.awaitMessageComponent({collectorRivalFilter, componentType:3,time:6000});
 
                     if(rivalResponseEnv4.values == 'acepto'){
                         game.playFenvido(true);
@@ -601,14 +601,14 @@ module.exports = {
                 const envRow3 = new ActionRowBuilder()
                 .addComponents(envSelectResponse3);
 
-                const rivalResponseEnv3msg = round1RivalInteraction.reply(
+                const rivalResponseEnv3msg = await round1RivalInteraction.reply(
                     {
                         content:`aceptas el ${round1RivalInteraction.values}`,
                         components:[envRow3],
                     }
                 )
 
-                const rivalResponseEnv3 = rivalResponseEnv3msg.awaitMessageComponent({collectorRivalFilter, componentType:3,time:6000});
+                const rivalResponseEnv3 = await rivalResponseEnv3msg.awaitMessageComponent({collectorRivalFilter, componentType:3,time:6000});
                 
                 if(rivalResponseEnv3.values == 'acepto'){
                     game.playRenvido(true);
@@ -619,12 +619,12 @@ module.exports = {
                     const envRow4 = new ActionRowBuilder()
                     .addComponents(envSelectResponse4);
 
-                    const userResponseEnv4msg = rivalResponseEnv3.reply({
+                    const userResponseEnv4msg = await rivalResponseEnv3.reply({
                         content:`aceptas el ${rivalResponseEnv3.values}`,
                         components:[envRow4],
                     })
 
-                    const userResponseEnv4 = userResponseEnv4msg.awaitMessageComponent({collectorUserFilter, componentType:3, time:6000});
+                    const userResponseEnv4 = await userResponseEnv4msg.awaitMessageComponent({collectorUserFilter, componentType:3, time:6000});
 
                     if(userResponseEnv4.values == 'acepto'){
                         game.playFenvido(true);
@@ -637,14 +637,14 @@ module.exports = {
                 const envRow4 = new ActionRowBuilder()
                 .addComponents(envSelectResponse4);
 
-                const rivalResponseEnv3msg = round1RivalInteraction.reply(
+                const rivalResponseEnv3msg = await round1RivalInteraction.reply(
                     {
                         content:`aceptas el ${round1RivalInteraction.values}`,
                         components:[envRow4],
                     }
                 )
 
-                const rivalResponseEnv3 = rivalResponseEnv3msg.awaitMessageComponent({collectorRivalFilter, componentType:3,time:6000});
+                const rivalResponseEnv3 = await rivalResponseEnv3msg.awaitMessageComponent({collectorRivalFilter, componentType:3,time:6000});
                 
                 if(rivalResponseEnv3.values == 'acepto'){
                     game.playRenvido(true);
@@ -652,7 +652,7 @@ module.exports = {
                     game.playRenvido(false);
                 }
             }
-
+            console.log(game.pointsEnvido);
         }catch(e){
             console.log(e);
             await interaction.editReply({ content: 'Confirmation not received within 1 minute, cancelling', components: [] });
