@@ -314,8 +314,8 @@ module.exports = {
             components : [cortarRow],
         })
 
-        const collectorRivalFilter = (i) => i.user.id == rival.id && i.user.id != user.id;
-        const collectorUserFilter = (i) => i.user.id != rival.id && i.user.id == user.id;
+        const collectorRivalFilter = (i) => i.user.id == rival.id;
+        const collectorUserFilter = (i) => i.user.id == user.id;
 
         try{
             const cortarInteraction = await rivalresponse.awaitMessageComponent({ collectorRivalFilter, componentType: 2, time: 60000 });
@@ -378,7 +378,7 @@ module.exports = {
             let firstRoundEmbed = new EmbedBuilder()
             .setTitle('Primera mano!')
             .setColor('#FFDE33')
-            .setDescription(`${user} vs ${rival} jugando un trucardo`)
+            .setDescription(`${user} vs ${rival} jugando un trucardo`);
 
             const round1response = await msgTable.reply(
                 {
@@ -386,8 +386,9 @@ module.exports = {
                     components:[firstRoundRow],
                     embeds:[firstRoundEmbed]
                 }
-            )
-            const round1RivalInteraction = await round1response.awaitMessageComponent({ collectorRivalFilter, componentType: 3, time: 60000 });
+            ); 
+            
+            const round1RivalInteraction = await round1response.awaitMessageComponent({ collector, componentType: 3, time: 60000 });
             
             const envSelectResponse= new StringSelectMenuBuilder()
                 .setCustomId('envResp')
@@ -414,7 +415,7 @@ module.exports = {
 			);
 
             const envSelectResponse2= new StringSelectMenuBuilder()
-                .setCustomId('envResp')
+                .setCustomId('envResp2')
                 .setPlaceholder('Select your response!')
                 .addOptions(
                 new StringSelectMenuOptionBuilder()
@@ -435,7 +436,7 @@ module.exports = {
             );
 
             const envSelectResponse3= new StringSelectMenuBuilder()
-                .setCustomId('envResp')
+                .setCustomId('envResp3')
                 .setPlaceholder('Select your response!')
                 .addOptions(
                 new StringSelectMenuOptionBuilder()
@@ -452,7 +453,7 @@ module.exports = {
                     .setValue('salir'),
             );
             const envSelectResponse4= new StringSelectMenuBuilder()
-                .setCustomId('envResp')
+                .setCustomId('envResp4')
                 .setPlaceholder('Select your response!')
                 .addOptions(
                 new StringSelectMenuOptionBuilder()
@@ -472,11 +473,14 @@ module.exports = {
                 
                 const userResponsemsg = await round1RivalInteraction.reply(
                     {
-                        content:`aceptas el ${round1RivalInteraction.values}`,
+                        content:`${user} aceptas el ${round1RivalInteraction.values}`,
                         components:[envRow],
                     }
-                )
-                const userResponseEnv = await userResponsemsg.awaitMessageComponent({collectorUserFilter,componentType:3,time:6000,});
+                ); 
+
+                const userResponseEnv = await userResponsemsg.awaitMessageComponent({collectorUserFilter,componentType:3,time:60000});
+
+                console.log(userResponseEnv.values);
                 if(userResponseEnv.values == 'acepto' ){
                     game.playEnvido(true);
                 }else if(userResponseEnv.values == 'rechazo'){
@@ -493,7 +497,7 @@ module.exports = {
                         }
                     )
 
-                    const rivalResponseEnv2 = await rivalResponseEnv2msg.awaitMessageComponent({collectorRivalFilter, componentType:3,time:6000});
+                    const rivalResponseEnv2 = await rivalResponseEnv2msg.awaitMessageComponent({collectorRivalFilter, componentType:3,time:60000});
 
                     if(rivalResponseEnv2.values == 'acepto'){
                         game.playEnvido(true);
@@ -511,7 +515,7 @@ module.exports = {
                             }
                         )
                         
-                        const userResponseEnv3 = await userResponseEnv3msg.awaitMessageComponent({collectorUserFilter, componentType:3, time:6000});
+                        const userResponseEnv3 = await userResponseEnv3msg.awaitMessageComponent({collectorUserFilter, componentType:3, time:60000});
 
                         if(userResponseEnv3.values == 'acepto'){
                             game.playRenvido(true);
@@ -535,7 +539,7 @@ module.exports = {
                             }
                         )
 
-                        const rivalResponseEnv4 = await rivalResponseEnv4msg.awaitMessageComponent({collectorUserFilter, componentType:3, time:6000})
+                        const rivalResponseEnv4 = await rivalResponseEnv4msg.awaitMessageComponent({collectorUserFilter, componentType:3, time:60000})
                         
                         if(rivalResponseEnv4.values == 'acepto'){
                             game.playFenvido(true);
@@ -553,7 +557,7 @@ module.exports = {
                         components:[envRow3],
                     });
 
-                    const rivalResponseEnv3 = await rivalResponseEnv3msg.awaitMessageComponent({collectorRivalFilter, componentType:3,time:6000});
+                    const rivalResponseEnv3 = await rivalResponseEnv3msg.awaitMessageComponent({collectorRivalFilter, componentType:3,time:60000});
 
                     if(rivalResponseEnv3.values == 'acepto'){
                         game.playRenvido(true);
@@ -570,7 +574,7 @@ module.exports = {
                             components:[envRow4],
                         })
 
-                        const userResponseEnv4 = await userResponseEnv4msg.awaitMessageComponent({collectorUserFilter, componentType:3,time:6000});
+                        const userResponseEnv4 = await userResponseEnv4msg.awaitMessageComponent({collectorUserFilter, componentType:3,time:60000});
 
                         if(userResponseEnv4.values == 'acepto'){
                             game.playFenvido(true);
@@ -589,7 +593,7 @@ module.exports = {
                             components:[envRow4],
                     })
 
-                    const rivalResponseEnv4 = await rivalResponseEnv4msg.awaitMessageComponent({collectorRivalFilter, componentType:3,time:6000});
+                    const rivalResponseEnv4 = await rivalResponseEnv4msg.awaitMessageComponent({collectorRivalFilter, componentType:3,time:60000});
 
                     if(rivalResponseEnv4.values == 'acepto'){
                         game.playFenvido(true);
@@ -608,7 +612,7 @@ module.exports = {
                     }
                 )
 
-                const rivalResponseEnv3 = await rivalResponseEnv3msg.awaitMessageComponent({collectorRivalFilter, componentType:3,time:6000});
+                const rivalResponseEnv3 = await rivalResponseEnv3msg.awaitMessageComponent({collectorRivalFilter, componentType:3,time:60000});
                 
                 if(rivalResponseEnv3.values == 'acepto'){
                     game.playRenvido(true);
@@ -624,7 +628,7 @@ module.exports = {
                         components:[envRow4],
                     })
 
-                    const userResponseEnv4 = await userResponseEnv4msg.awaitMessageComponent({collectorUserFilter, componentType:3, time:6000});
+                    const userResponseEnv4 = await userResponseEnv4msg.awaitMessageComponent({collectorUserFilter, componentType:3, time:60000});
 
                     if(userResponseEnv4.values == 'acepto'){
                         game.playFenvido(true);
@@ -644,7 +648,7 @@ module.exports = {
                     }
                 )
 
-                const rivalResponseEnv3 = await rivalResponseEnv3msg.awaitMessageComponent({collectorRivalFilter, componentType:3,time:6000});
+                const rivalResponseEnv3 = await rivalResponseEnv3msg.awaitMessageComponent({collectorRivalFilter, componentType:3,time:60000});
                 
                 if(rivalResponseEnv3.values == 'acepto'){
                     game.playRenvido(true);
