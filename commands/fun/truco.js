@@ -8,12 +8,18 @@ class Player{
         this.icon = iconImg;
         this.hand = {"unused":[], "used":[]};
         this.points = 0;
+        this.coincidences = {"bastos":{"n":0, "val":0},"copas":{"n":0, "val":0},"espadas":{"n":0, "val":0},"oros":{"n":0, "val":0}};
     }
 
     addCard(card){
         this.hand.unused.push(card);
     }
 
+    addCoincidence(card){
+        this.coincidences[card.getType]["n"] +=1;
+        this.coincidences[card.getType]["val"] += card.getValue;
+    }
+    
     addPoints(points){
         this.points += points;
     }
@@ -40,14 +46,27 @@ class Player{
     }
 
     get getCardPoints(){
-        
+        let card1 = this.hand.unused[0];
+        let card2 = this.hand.unused[1];
+        let card3 = this.hand.unused[2];
+        if(card1.getType == card2.getType && card2.getType == card3.getType){
+            return Math.max(...[card1.getValue + card2.getValue, card1.getValue + card3.getValue, card2.getValue + card3.getValue]) +20;
+        }else{
+            const con = Object.values(this.coincidences).filter(x => x.n == 2);
+            if(con.length == 1){
+                return con["val"]+20;
+            }else{
+                const con = Object.values(this.coincidences).filter(x => x.n >= 1);
+                return Math.max(...[con[0]["val"],con[1]["val"],con[2]["val"]]);
+            }
+        }
     }
 }
 
 class Card{
-    constructor(palo,value){
+    constructor(palo,value,pointvalue){
         this.type = palo;
-        this.value = value;
+        this.value = pointvalue;
         this.image = `./images/cards/${palo}/${value}.jpg`;
     }
 
@@ -77,7 +96,11 @@ class Baraja{
 
         for (const palo of palos){
             for(const valor of valores){
-                this.cartas.push(new Card(palo,valor));
+                if([10,11,12].includes(valor)){
+                    this.cartas.push(new Card(palo,valor,0));
+                }else{
+                    this.cartas.push(new Card(palo,valor,valor));
+                }
             }
         }
     }
@@ -94,15 +117,23 @@ class Baraja{
     repartir(user,rival, cortar){
         if(cortar){
             for (let i = 0; i < 3; i++) {
-                user.addCard(this.cartas.pop());
-                rival.addCard(this.cartas.pop());
+                let card = this.cartas.pop();
+                user.addCard(card);
+                user.addCoincidence(card);
+                card = this.cartas.pop();
+                rival.addCard(card);
+                rival.addCoincidence(card)
             }
         }else{
             for (let i = 0; i < 3; i++) {
-                user.addCard(this.cartas.pop());
+                let card = this.cartas.pop();
+                user.addCard(card);
+                user.addCoincidence(card);
             }
             for (let i = 0; i < 3; i++) {
-                rival.addCard(this.cartas.pop());
+                let card = this.cartas.pop();
+                rival.addCard(card);
+                rival.addCoincidence(card)
             }
         }
     }
