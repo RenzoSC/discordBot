@@ -54,10 +54,10 @@ class Player{
         }else{
             const con = Object.values(this.coincidences).filter(x => x.n == 2);
             if(con.length == 1){
-                return con["val"]+20;
+                return con[0]["val"]+20;
             }else{
-                const con = Object.values(this.coincidences).filter(x => x.n >= 1);
-                return Math.max(...[con[0]["val"],con[1]["val"],con[2]["val"]]);
+                let con1 = Object.values(this.coincidences).filter(x => x.n >= 1);
+                return Math.max(...[con1[0]["val"],con1[1]["val"],con1[2]["val"]]);
             }
         }
     }
@@ -313,6 +313,25 @@ function gif_to_png(url){
     return newurl;
 }
 
+async function compRoundEnvido(optComponent, prevInteraction,prevMsg,userTarget, collector){
+    const envRow = new ActionRowBuilder()
+    .addComponents(optComponent);
+    let responseMsg = await prevMsg.reply({
+        content:`${userTarget} aceptas el ${prevInteraction.values[0]}`,
+        components:[envRow],
+    })
+
+    const responseEnv = await responseMsg.awaitMessageComponent({collector, componentType:3, time:60000});
+
+    responseMsg = await responseMsg.edit({
+        content:`${userTarget} seleccionó ${responseEnv.values[0]}`,
+        components:[],
+        embeds:[]
+    })
+
+    return [responseEnv, responseMsg];
+}
+
 module.exports = {
     data: new SlashCommandBuilder()
     .setName('truco')
@@ -372,7 +391,6 @@ module.exports = {
 
             await game.sendCardsTo(user, game.user);
             await game.sendCardsTo(rival, game.rival);
-
             let cardSelect = new StringSelectMenuBuilder()
 			.setCustomId('starter')
 			.setPlaceholder('Make a selection!')
@@ -504,257 +522,105 @@ module.exports = {
                 components:[],
                 embeds:[]
             })
-
             if(round1RivalInteraction.values[0] == 'envido'){ //first round envido
                 
-                const envRow = new ActionRowBuilder()
-                .addComponents(envSelectResponse);
-                
-                let userResponseMsg = await round1response.reply(
-                    {
-                        content:`${user} aceptas el ${round1RivalInteraction.values[0]}`,
-                        components:[envRow],
-                    }
-                ); 
+                const interR1 = await compRoundEnvido(envSelectResponse, round1RivalInteraction, round1response, user, collectorUserFilter);
 
-                const userResponseEnv = await userResponseMsg.awaitMessageComponent({collectorUserFilter,componentType:3,time:60000});
-                
-                userResponseMsg= await userResponseMsg.edit({
-                    content:`${user} seleccionó ${userResponseEnv.values[0]}`,
-                    components:[],
-                    embeds:[]
-                })
-                
-                if(userResponseEnv.values[0] == 'acepto' ){
+                if(interR1[0].values[0] == 'acepto' ){
                     game.playEnvido(true);
-                }else if(userResponseEnv.values[0] == 'rechazo'){
+                }else if(interR1[0].values[0] == 'rechazo'){
                     game.playEnvido(false);
-                }else if(userResponseEnv.values[0] == 'envido'){   //envido envido
+                }else if(interR1[0].values[0] == 'envido'){   //envido envido
+                    game.playEnvido(true);
+                    const interR2 = await compRoundEnvido(envSelectResponse2, interR1[0],interR1[1],rival, collectorRivalFilter);
 
-                    const envRow2 = new ActionRowBuilder()
-                    .addComponents(envSelectResponse2);
-
-                    let rivalResponseEnv2msg = await userResponseMsg.reply(
-                        {
-                            content:`${rival} aceptas el ${userResponseEnv.values[0]}?`,
-                            components:[envRow2],
-                        }
-                    )
-
-                    const rivalResponseEnv2 = await rivalResponseEnv2msg.awaitMessageComponent({collectorRivalFilter, componentType:3,time:60000});
-                    
-                    rivalResponseEnv2msg = await rivalResponseEnv2msg.edit({
-                        content:`${rival} seleccionó ${rivalResponseEnv2.values[0]}`,
-                        components:[],
-                        embeds:[]
-                    })
-
-                    if(rivalResponseEnv2.values[0] == 'acepto'){
+                    if(interR2[0].values[0] == 'acepto'){
                         game.playEnvido(true);
-                    }else if(rivalResponseEnv2.values[0] == 'rechazo'){
+                    }else if(interR2[0].values[0] == 'rechazo'){
                         game.playEnvido(false);
-                    }else if(rivalResponseEnv2.values[0] == 'real envido'){   //envido envido real envido
+                    }else if(interR2[0].values[0] == 'real envido'){   //envido envido real envido
                         game.playEnvido(true);
-                        const envRow3 = new ActionRowBuilder()
-                        .addComponents(envSelectResponse3);
-                        
-                        let userResponseEnv3msg = await rivalResponseEnv2msg.reply(
-                            {
-                                content:`${user} aceptas el ${rivalResponseEnv2.values[0]}?`,
-                                components:[envRow3],
-                            }
-                        );
-                        
-                        const userResponseEnv3 = await userResponseEnv3msg.awaitMessageComponent({collectorUserFilter, componentType:3, time:60000});
-                        
-                        userResponseEnv3msg = await userResponseEnv3msg.edit({
-                            content:`${user} seleccionó ${userResponseEnv3.values[0]}`,
-                            components:[],
-                            embeds:[]
-                        });
+                        const interR3 = await compRoundEnvido(envSelectResponse3,interR2[0],interR2[1],user,collectorUserFilter);
 
-                        if(userResponseEnv3.values[0] == 'acepto'){
+                        if(interR3[0].values[0] == 'acepto'){
                             game.playRenvido(true);
-                        }else if(userResponseEnv3.values[0] == 'rechazo'){
+                        }else if(interR3[0].values[0] == 'rechazo'){
                             game.playRenvido(false);
-                        }else if(userResponseEnv3.values[0] == 'falta envido'){  //envido envido real envido falta envido
+                        }else if(interR3[0].values[0] == 'falta envido'){  //envido envido real envido falta envido
                             game.playRenvido(true);
                             game.playFenvido(true);
                         }
 
-                    }else if(rivalResponseEnv2.values[0] == 'falta envido'){   //envido envido falta envido
+                    }else if(interR2[0].values[0] == 'falta envido'){   //envido envido falta envido
                         game.playEnvido(true);
 
-                        const envRow4 = new ActionRowBuilder()
-                        .addComponents(envSelectResponse4);
-                        
-                        let rivalResponseEnv4msg = await rivalResponseEnv2msg.reply(
-                            {
-                                content:`${rival} aceptas el ${rivalResponseEnv2.values[0]}?`,
-                                components:[envRow4],
-                            }
-                        );
+                        const interR3 = await compRoundEnvido(envSelectResponse4, interR2[0], interR2[1],rival, collectorRivalFilter);
 
-                        const rivalResponseEnv4 = await rivalResponseEnv4msg.awaitMessageComponent({collectorUserFilter, componentType:3, time:60000});
-                        
-                        rivalResponseEnv4msg = await rivalResponseEnv4msg.reply({
-                            content:`${rival} seleccionó ${rivalResponseEnv4.values[0]}`,
-                            components:[],
-                            embeds:[]
-                        });
-
-                        if(rivalResponseEnv4.values[0] == 'acepto'){
+                        if(interR3[0].values[0] == 'acepto'){
                             game.playFenvido(true);
-                        }else if(rivalResponseEnv4.values[0] == 'rechazo'){
+                        }else if(interR3[0].values[0] == 'rechazo'){
                             game.playFenvido(false);
                         }
                     }
-                }else if(userResponseEnv.values[0] == 'real envido'){  //envido real envido
+                }else if(interR1[0].values[0] == 'real envido'){  //envido real envido
                     game.playEnvido(true);
-                    const envRow3 = new ActionRowBuilder()
-                    .addComponents(envSelectResponse3);
+                    
+                    const interR2 =await compRoundEnvido(envSelectResponse3, interR1[0], interR1[1],rival, collectorRivalFilter);
 
-                    let rivalResponseEnv3msg = await userResponseMsg.reply({
-                        content:`${rival} aceptas el ${userResponseEnv.values[0]}?`,
-                        components:[envRow3],
-                    });
-
-                    const rivalResponseEnv3 = await rivalResponseEnv3msg.awaitMessageComponent({collectorRivalFilter, componentType:3,time:60000});
-
-                    rivalResponseEnv3msg = await rivalResponseEnv3msg.edit({
-                        content:`${rival} seleccionó ${rivalResponseEnv3.values[0]}`,
-                        components:[],
-                        embeds:[]
-                    })
-
-                    if(rivalResponseEnv3.values[0] == 'acepto'){
+                    if(interR2[0].values[0] == 'acepto'){
                         game.playRenvido(true);
-                    }else if (rivalResponseEnv3.values[0] == 'rechazo'){
+                    }else if (interR2[0].values[0] == 'rechazo'){
                         game.playRenvido(false);
-                    }else if( rivalResponseEnv3.values[0] == 'falta envido'){ //envido real envido falta envido
+                    }else if(interR2[0].values[0] == 'falta envido'){ //envido real envido falta envido
                         game.playRenvido(true);
 
-                        const envRow4 = new ActionRowBuilder()
-                        .addComponents(envSelectResponse4);
+                        const interR3 = await compRoundEnvido(envSelectResponse4,interR2[0],interR2[1],user, collectorUserFilter);
 
-                        let userResponseEnv4msg = await rivalResponseEnv3msg.reply({
-                            content:`${user} aceptas el ${rivalResponseEnv3.values[0]}?`,
-                            components:[envRow4],
-                        })
-
-                        const userResponseEnv4 = await userResponseEnv4msg.awaitMessageComponent({collectorUserFilter, componentType:3,time:60000});
-
-                        userResponseEnv4msg = await userResponseEnv4msg.edit({
-                            content:`${user} seleccionó ${userResponseEnv4.values[0]}`,
-                            components:[],
-                            embeds:[]
-                        })
-
-                        if(userResponseEnv4.values[0] == 'acepto'){
+                        if(interR3[0].values[0] == 'acepto'){
                             game.playFenvido(true);
-                        }else if(userResponseEnv4.values[0] == ' rechazo'){
+                        }else if(interR3[0].values[0] == ' rechazo'){
                             game.playFenvido(false);
                         }
                     }
-                }else if(userResponseEnv.values[0] == 'falta envido'){  //envido falta envido
+                }else if(interR1[0].values[0] == 'falta envido'){  //envido falta envido
                     game.playEnvido(true);
 
-                    const envRow4 = new ActionRowBuilder()
-                    .addComponents(envSelectResponse4);
+                    const interR2 = await compRoundEnvido(envSelectResponse4, interR1[0], interR1[1],rival, collectorRivalFilter);
 
-                    let rivalResponseEnv4msg = await userResponseMsg.reply({
-                        content:`${rival} aceptas el ${userResponseEnv.values[0]}?`,
-                            components:[envRow4],
-                    })
-
-                    const rivalResponseEnv4 = await rivalResponseEnv4msg.awaitMessageComponent({collectorRivalFilter, componentType:3,time:60000});
-
-                    rivalResponseEnv4msg = await rivalResponseEnv4msg.edit({
-                        content:`${rival} seleccionó ${rivalResponseEnv4.values[0]}`,
-                        components:[],
-                        embeds:[]
-                    })
-
-                    if(rivalResponseEnv4.values[0] == 'acepto'){
+                    if(interR2[0].values[0] == 'acepto'){
                         game.playFenvido(true);
-                    }else if(rivalResponseEnv4.values[0] == 'rechazo'){
+                    }else if(interR2[0].values[0] == 'rechazo'){
                         game.playFenvido(false);
                     }
                 }
             }else if(round1RivalInteraction.values[0] == 'real envido'){ // first round real envido
-                const envRow3 = new ActionRowBuilder()
-                .addComponents(envSelectResponse3);
+            
+                const interR1 = await compRoundEnvido(envSelectResponse3, round1RivalInteraction, round1response, rival, collectorRivalFilter);
 
-                let rivalResponseEnv3msg = await round1RivalInteraction.reply(
-                    {
-                        content:`${rival} aceptas el ${round1RivalInteraction.values[0]}?`,
-                        components:[envRow3],
-                    }
-                )
-
-                const rivalResponseEnv3 = await rivalResponseEnv3msg.awaitMessageComponent({collectorRivalFilter, componentType:3,time:60000});
-                
-                rivalResponseEnv3msg = await rivalResponseEnv3msg.edit({
-                    content:`${rival} seleccionó ${rivalResponseEnv3.values[0]}`,
-                    components:[],
-                    embeds:[]
-                })
-
-                if(rivalResponseEnv3.values[0] == 'acepto'){
+                if(interR1[0].values[0] == 'acepto'){
                     game.playRenvido(true);
-                }else if(rivalResponseEnv3.values[0] =='rechazo'){
+                }else if(interR1[0].values[0] =='rechazo'){
                     game.playRenvido(false);
-                }else if(rivalResponseEnv3.values[0] == 'falta envido'){  //real envido falta envido
+                }else if(interR1[0].values[0] == 'falta envido'){  //real envido falta envido
+                    game.playRenvido(true);
 
-                    const envRow4 = new ActionRowBuilder()
-                    .addComponents(envSelectResponse4);
-
-                    let userResponseEnv4msg = await rivalResponseEnv3.reply({
-                        content:`${user} aceptas el ${rivalResponseEnv3.values[0]}?`,
-                        components:[envRow4],
-                    })
-
-                    const userResponseEnv4 = await userResponseEnv4msg.awaitMessageComponent({collectorUserFilter, componentType:3, time:60000});
-
-                    userResponseEnv4msg = await userResponseEnv4msg.edit({
-                        content:`${user} seleccionó ${userResponseEnv4.values[0]}`,
-                        components:[],
-                        embeds:[]
-                    })
-
-                    if(userResponseEnv4.values[0] == 'acepto'){
+                    const interR2 = await compRoundEnvido(envSelectResponse4, interR1[0], interR1[1], user, collectorUserFilter);
+                    if(interR2[0].values[0] == 'acepto'){
                         game.playFenvido(true);
-                    }else if(userResponseEnv4.values[0] == 'rechazo'){
+                    }else if(interR2[0].values[0] == 'rechazo'){
                         game.playFenvido(false);
                     }
                 }
 
             }else if(round1RivalInteraction.values[0] == 'falta envido'){// first round falta envido
-                const envRow4 = new ActionRowBuilder()
-                .addComponents(envSelectResponse4);
-
-                let rivalResponseEnv3msg = await round1RivalInteraction.reply(
-                    {
-                        content:`${rival} aceptas el ${round1RivalInteraction.values[0]}?`,
-                        components:[envRow4],
-                    }
-                )
-                
-                rivalResponseEnv3msg = await rivalResponseEnv3msg.edit({
-                    content:`${rival} seleccionó ${rivalResponseEnv3.values[0]}`,
-                    components:[],
-                    embeds:[]
-                })
-
-                const rivalResponseEnv3 = await rivalResponseEnv3msg.awaitMessageComponent({collectorRivalFilter, componentType:3,time:60000});
-                
-                if(rivalResponseEnv3.values[0] == 'acepto'){
+                const interR1 = await compRoundEnvido(envSelectResponse4, round1RivalInteraction, round1response, rival, collectorRivalFilter);
+                if(interR1[0].values[0] == 'acepto'){
                     game.playRenvido(true);
-                }else if(rivalResponseEnv3.values[0] =='rechazo'){
+                }else if(interR1[0].values[0] =='rechazo'){
                     game.playRenvido(false);
                 }
             }
-            console.log(game.pointsEnvido);
+
         }catch(e){
             console.log(e);
             await interaction.editReply({ content: 'Confirmation not received within 1 minute, cancelling', components: [] });
