@@ -1,4 +1,4 @@
-const {SlashCommandBuilder, ActionRowBuilder, ButtonStyle, ButtonBuilder, AttachmentBuilder, EmbedBuilder, StringSelectMenuBuilder, StringSelectMenuOptionBuilder} = require("discord.js");
+const {SlashCommandBuilder, ActionRowBuilder, ButtonStyle, ButtonBuilder, AttachmentBuilder, EmbedBuilder, StringSelectMenuBuilder, StringSelectMenuOptionBuilder, time} = require("discord.js");
 
 const Canvas = require('@napi-rs/canvas');
 
@@ -68,6 +68,7 @@ class Card{
         this.type = palo;
         this.value = pointvalue;
         this.image = `./images/cards/${palo}/${value}.jpg`;
+        this.name = `${value} de ${palo}`;
     }
 
     get getType(){
@@ -76,6 +77,10 @@ class Card{
 
     get getValue(){
         return this.value;
+    }
+
+    get getName(){
+        return this.name;
     }
 
     get getImage(){
@@ -148,7 +153,7 @@ class Table{
         this.winTrack = [];
         this.baraja = new Baraja();
         this.pointsRoundIG = 1;
-        this.pointsEnvido ={"envpoints":0,"toplayer":this.user};
+        this.pointsEnvido =0;
     }
 
     startGame(cortar){
@@ -165,42 +170,6 @@ class Table{
         if(this.winTrack.length == 1){
             this.firstStageWon = winner;
         }
-    }
-    
-    endHandNormal(empate,points){
-        if(empate){
-            this.firstStageWon.addPoints(points);
-        }else{
-            let counter= 0;
-            for (const u in this.winTrack) {
-                if (u == this.user) {
-                    counter +=1
-                }
-            }
-
-            if(counter == 2){
-                this.user.addPoints(points);
-            }else{
-                this.rival.addPoints(points);
-            }
-        }
-        this.round = 0;
-        this.winTrack = [];
-        this.pointsRoundIG = 1;
-        this.winTrack = [];
-    }
-
-    endHandNoTruco(caller){
-        this.caller.addPoints(2);
-        this.round = 0;
-        this.winTrack = [];
-        this.pointsRoundIG = 1;
-        this.winTrack = [];
-    }
-
-    
-    calcPointsInGame(){
-
     }
 
     playEnvido(quiero){
@@ -227,10 +196,24 @@ class Table{
         }
     }
 
-    playTruco(quiero, caller){
-        this.pointsRoundIG +=1;
-        if(!quiero){
-            this.endHandNoTruco(caller);
+    playTruco(quiero){
+        //previamente puntos de ronda = 1  (si se rechza se lleva esto)
+        if(quiero){
+            this.pointsRoundIG +=1; //acá valdría 2
+        }
+    }
+
+    playRetruco(quiero){
+        //previamente se sumó 1 a los puntos de ronda --> puntos de ronda = 2  (si se rechza se lleva esto)
+        if(quiero){
+            this.pointsRoundIG +=1;          //acá valdría 3
+        }
+    }
+
+    playValeCuatro(quiero){
+        //previamente se sumó 1 a los puntos de ronda --> puntos de ronda = 3  (si se rechza se lleva esto)
+        if(quiero){
+            this.pointsRoundIG +=1;          //acá valdría 4
         }
     }
 
@@ -250,7 +233,7 @@ class Table{
             context.drawImage(cartadef,200 + 110*i, 50, 70, 110);
         }
         for (let i = 0; i < this.user.getUsedHand.length; i++) {
-            cartaUser = await Canvas.loadImage(this.user.getHand[i].getImage);
+            cartaUser = await Canvas.loadImage(this.user.getUsedHand[i].getImage);
             context.drawImage(cartaUser,200 + 110*i +110*this.user.getHand.length, 50, 70, 110);
         }
         
@@ -258,11 +241,11 @@ class Table{
             context.drawImage(cartadef,200 + 110*i, canvas.height - 160, 70, 110);
         }
         for (let i = 0; i < this.rival.getUsedHand.length; i++) {
-            cartaRival = await Canvas.loadImage(this.user.getHand[i].getImage);
+            cartaRival = await Canvas.loadImage(this.rival.getUsedHand[i].getImage);
             context.drawImage(cartaRival,200 + 110*i +110*this.rival.getHand.length, canvas.height-160, 70, 110);
         }
         const attachment = new AttachmentBuilder(await canvas.encode('png'), { name: 'profile-image.png' });
-        const respuesta = await interaction.followUp({files:[attachment]});
+        const respuesta = await interaction.reply({files:[attachment]});
         return respuesta;
     }
 
@@ -331,7 +314,194 @@ async function compRoundEnvido(optComponent, prevInteraction,prevMsg,userTarget,
 
     return [responseEnv, responseMsg];
 }
+async function roundEnvido(round1RivalInteraction, round1response, game,user,rival, collectorUserFilter, collectorRivalFilter){
+    const envSelectResponse= new StringSelectMenuBuilder()
+        .setCustomId('envResp')
+        .setPlaceholder('Select your response!')
+        .addOptions(
+        new StringSelectMenuOptionBuilder()
+            .setLabel('Acepto')
+            .setValue('acepto'),
+        new StringSelectMenuOptionBuilder()
+            .setLabel('No acepto')
+            .setValue('rechazo'),
+        new StringSelectMenuOptionBuilder()
+            .setLabel('Envido')
+            .setValue('envido'),
+        new StringSelectMenuOptionBuilder()
+            .setLabel('Real envido')
+            .setValue('real envido'),
+        new StringSelectMenuOptionBuilder()
+            .setLabel('Falta envido')
+            .setValue('falta envido'),
+        new StringSelectMenuOptionBuilder()
+            .setLabel('Salir')
+            .setValue('salir'),
+    );
+            
+    const envSelectResponse2= new StringSelectMenuBuilder()
+        .setCustomId('envResp')
+        .setPlaceholder('Select your response!')
+        .addOptions(
+        new StringSelectMenuOptionBuilder()
+            .setLabel('Acepto')
+            .setValue('acepto'),
+        new StringSelectMenuOptionBuilder()
+            .setLabel('No acepto')
+            .setValue('rechazo'),
+        new StringSelectMenuOptionBuilder()
+            .setLabel('Real envido')
+            .setValue('real envido'),
+        new StringSelectMenuOptionBuilder()
+            .setLabel('Falta envido')
+            .setValue('falta envido'),
+        new StringSelectMenuOptionBuilder()
+            .setLabel('Salir')
+            .setValue('salir'),
+	);
 
+    const envSelectResponse3= new StringSelectMenuBuilder()
+        .setCustomId('envResp')
+        .setPlaceholder('Select your response!')
+        .addOptions(
+        new StringSelectMenuOptionBuilder()
+            .setLabel('Acepto')
+            .setValue('acepto'),
+        new StringSelectMenuOptionBuilder()
+            .setLabel('No acepto')
+            .setValue('rechazo'),
+        new StringSelectMenuOptionBuilder()
+            .setLabel('Falta envido')
+            .setValue('falta envido'),
+        new StringSelectMenuOptionBuilder()
+            .setLabel('Salir')
+            .setValue('salir'),
+	);
+
+    const envSelectResponse4= new StringSelectMenuBuilder()
+        .setCustomId('envResp')
+        .setPlaceholder('Select your response!')
+        .addOptions(
+        new StringSelectMenuOptionBuilder()
+            .setLabel('Acepto')
+            .setValue('acepto'),
+        new StringSelectMenuOptionBuilder()
+            .setLabel('No acepto')
+            .setValue('rechazo'),
+        new StringSelectMenuOptionBuilder()
+            .setLabel('Salir')
+            .setValue('salir'),
+	);
+    if(round1RivalInteraction.values[0] == 'envido'){ //first round envido
+                
+        const interR1 = await compRoundEnvido(envSelectResponse, round1RivalInteraction, round1response, user, collectorUserFilter);
+
+        if(interR1[0].values[0] == 'acepto' ){
+            game.playEnvido(true);
+        }else if(interR1[0].values[0] == 'rechazo'){
+            game.playEnvido(false);
+        }else if(interR1[0].values[0] == 'envido'){   //envido envido
+            game.playEnvido(true);
+            const interR2 = await compRoundEnvido(envSelectResponse2, interR1[0],interR1[1],rival, collectorRivalFilter);
+
+            if(interR2[0].values[0] == 'acepto'){
+                game.playEnvido(true);
+            }else if(interR2[0].values[0] == 'rechazo'){
+                game.playEnvido(false);
+            }else if(interR2[0].values[0] == 'real envido'){   //envido envido real envido
+                game.playEnvido(true);
+                const interR3 = await compRoundEnvido(envSelectResponse3,interR2[0],interR2[1],user,collectorUserFilter);
+
+                if(interR3[0].values[0] == 'acepto'){
+                    game.playRenvido(true);
+                }else if(interR3[0].values[0] == 'rechazo'){
+                    game.playRenvido(false);
+                }else if(interR3[0].values[0] == 'falta envido'){  //envido envido real envido falta envido
+                    game.playRenvido(true);
+                    game.playFenvido(true);
+                }
+
+            }else if(interR2[0].values[0] == 'falta envido'){   //envido envido falta envido
+                game.playEnvido(true);
+
+                const interR3 = await compRoundEnvido(envSelectResponse4, interR2[0], interR2[1],rival, collectorRivalFilter);
+
+                if(interR3[0].values[0] == 'acepto'){
+                    game.playFenvido(true);
+                }else if(interR3[0].values[0] == 'rechazo'){
+                    game.playFenvido(false);
+                }
+            }
+        }else if(interR1[0].values[0] == 'real envido'){  //envido real envido
+            game.playEnvido(true);
+                    
+            const interR2 =await compRoundEnvido(envSelectResponse3, interR1[0], interR1[1],rival, collectorRivalFilter);
+
+            if(interR2[0].values[0] == 'acepto'){
+                game.playRenvido(true);
+            }else if (interR2[0].values[0] == 'rechazo'){
+                game.playRenvido(false);
+            }else if(interR2[0].values[0] == 'falta envido'){ //envido real envido falta envido
+                game.playRenvido(true);
+
+                const interR3 = await compRoundEnvido(envSelectResponse4,interR2[0],interR2[1],user, collectorUserFilter);
+
+                if(interR3[0].values[0] == 'acepto'){
+                    game.playFenvido(true);
+                }else if(interR3[0].values[0] == ' rechazo'){
+                    game.playFenvido(false);
+                }
+            }
+        }else if(interR1[0].values[0] == 'falta envido'){  //envido falta envido
+            game.playEnvido(true);
+
+            const interR2 = await compRoundEnvido(envSelectResponse4, interR1[0], interR1[1],rival, collectorRivalFilter);
+
+            if(interR2[0].values[0] == 'acepto'){
+                game.playFenvido(true);
+            }else if(interR2[0].values[0] == 'rechazo'){
+                game.playFenvido(false);
+            }
+        }
+    }else if(round1RivalInteraction.values[0] == 'real envido'){ // first round real envido
+            
+        const interR1 = await compRoundEnvido(envSelectResponse3, round1RivalInteraction, round1response, rival, collectorRivalFilter);
+
+        if(interR1[0].values[0] == 'acepto'){
+            game.playRenvido(true);
+        }else if(interR1[0].values[0] =='rechazo'){
+            game.playRenvido(false);
+        }else if(interR1[0].values[0] == 'falta envido'){  //real envido falta envido
+            game.playRenvido(true);
+
+            const interR2 = await compRoundEnvido(envSelectResponse4, interR1[0], interR1[1], user, collectorUserFilter);
+            if(interR2[0].values[0] == 'acepto'){
+                game.playFenvido(true);
+            }else if(interR2[0].values[0] == 'rechazo'){
+                game.playFenvido(false);
+            }
+        }
+
+    }else if(round1RivalInteraction.values[0] == 'falta envido'){// first round falta envido
+        const interR1 = await compRoundEnvido(envSelectResponse4, round1RivalInteraction, round1response, rival, collectorRivalFilter);
+        if(interR1[0].values[0] == 'acepto'){
+            game.playRenvido(true);
+        }else if(interR1[0].values[0] =='rechazo'){
+            game.playRenvido(false);
+        }
+    }
+}
+
+function addCardOptions(selectMenu, user){
+    for (let i = 0; i < user.getHand.length; i++) {
+        selectMenu.addOptions(
+            new StringSelectMenuOptionBuilder()
+            .setLabel(`${user.getHand[i].getName}`)
+            .setValue(`${i}`)
+        );
+    }
+    return selectMenu;
+}
 module.exports = {
     data: new SlashCommandBuilder()
     .setName('truco')
@@ -339,13 +509,16 @@ module.exports = {
     .addUserOption((option)=>option.setName("friend").setDescription("Pana para jugar al truco").setRequired(true)),
 
     async execute(interaction){
-        const user = interaction.user;
-        const rival = interaction.options.getUser('friend');
-        const iconUser =  gif_to_png(user.avatarURL({extension: 'png'}));
-        const iconRival =  gif_to_png(rival.avatarURL({extension: 'png'}));
+        let user = interaction.user;
+        let rival = interaction.options.getUser('friend');
+        let iconUser =  gif_to_png(user.avatarURL({extension: 'png'}));
+        let iconRival =  gif_to_png(rival.avatarURL({extension: 'png'}));
         
         let game = new Table(user, iconUser, rival, iconRival);
         
+        const userOb = game.getUser;
+        const rivalOb = game.getRival;
+
         const cortar = new ButtonBuilder()
         .setCustomId('cortar')
         .setStyle(ButtonStyle.Primary)
@@ -359,7 +532,7 @@ module.exports = {
         const cortarRow = new ActionRowBuilder()
         .addComponents(cortar,nocortar);
 
-        const rivalresponse = await interaction.reply({
+        let rivalresponse = await interaction.reply({
             content:`${rival}\nVas a cortar o no?\n`,
             components : [cortarRow],
         })
@@ -375,19 +548,19 @@ module.exports = {
 
             if(respCortar == "cortar"){
                 game.startGame(true);
-                await cortarInteraction.update({
+                rivalresponse = await rivalresponse.edit({
                     content: "Cortamos la mano!",
                     components: []
                 });
             }else{
                 game.startGame(false);
-                await cortarInteraction.update({
+                rivalresponse = await rivalresponse.edit({
                     content: "No cortamos la mano!",
                     components: []
                 })
             }
 
-            const msgTable = await game.showTable(interaction);
+            const msgTable = await game.showTable(rivalresponse);
 
             await game.sendCardsTo(user, game.user);
             await game.sendCardsTo(rival, game.rival);
@@ -395,15 +568,6 @@ module.exports = {
 			.setCustomId('starter')
 			.setPlaceholder('Make a selection!')
 			.addOptions(
-				new StringSelectMenuOptionBuilder()
-					.setLabel('Primera carta')
-					.setValue('0'),
-				new StringSelectMenuOptionBuilder()
-					.setLabel('Segunda carta')
-					.setValue('1'),
-				new StringSelectMenuOptionBuilder()
-					.setLabel('Tercera carta')
-					.setValue('2'),
                 new StringSelectMenuOptionBuilder()
 					.setLabel('Envido')
 					.setValue('envido'),
@@ -420,7 +584,9 @@ module.exports = {
 					.setLabel('Salir')
 					.setValue('salir'),
 			);
-
+            
+            cardSelect = addCardOptions(cardSelect, game.getRival);
+            
             let firstRoundRow = new ActionRowBuilder()
             .setComponents(cardSelect)
             
@@ -438,17 +604,25 @@ module.exports = {
             ); 
             
             const round1RivalInteraction = await round1response.awaitMessageComponent({ collectorRivalFilter, componentType: 3, time: 60000 });
-            
-            const envSelectResponse= new StringSelectMenuBuilder()
-                .setCustomId('envResp')
+            round1response = await round1response.edit({
+                content:`${rival} seleccionó ${round1RivalInteraction.values[0]}`,
+                components:[],
+                embeds:[]
+            })
+
+            const trucoSelectResponseRound1= new StringSelectMenuBuilder()
+                .setCustomId('trucoResp')
                 .setPlaceholder('Select your response!')
                 .addOptions(
                 new StringSelectMenuOptionBuilder()
-                    .setLabel('Acepto')
+                    .setLabel('Quiero')
                     .setValue('acepto'),
                 new StringSelectMenuOptionBuilder()
-                    .setLabel('No acepto')
+                    .setLabel('No quiero')
                     .setValue('rechazo'),
+                new StringSelectMenuOptionBuilder()
+                    .setLabel('Quiero retruco')
+                    .setValue('retruco'),
                 new StringSelectMenuOptionBuilder()
                     .setLabel('Envido')
                     .setValue('envido'),
@@ -458,167 +632,117 @@ module.exports = {
                 new StringSelectMenuOptionBuilder()
                     .setLabel('Falta envido')
                     .setValue('falta envido'),
+                );
+            const retrucoSelectResponse= new StringSelectMenuBuilder()
+                .setCustomId('retrucoResp')
+                .setPlaceholder('Select your response!')
+                .addOptions(
                 new StringSelectMenuOptionBuilder()
-                    .setLabel('Salir')
-                    .setValue('salir'),
-			);
+                    .setLabel('Quiero')
+                    .setValue('acepto'),
+                new StringSelectMenuOptionBuilder()
+                    .setLabel('No quiero')
+                    .setValue('rechazo'),
+                new StringSelectMenuOptionBuilder()
+                    .setLabel('Quiero vale cuatro')
+                    .setValue('vale cuatro'),
+                );
             
-            const envSelectResponse2= new StringSelectMenuBuilder()
-                .setCustomId('envResp')
-                .setPlaceholder('Select your response!')
-                .addOptions(
-                new StringSelectMenuOptionBuilder()
-                    .setLabel('Acepto')
-                    .setValue('acepto'),
-                new StringSelectMenuOptionBuilder()
-                    .setLabel('No acepto')
-                    .setValue('rechazo'),
-                new StringSelectMenuOptionBuilder()
-                    .setLabel('Real envido')
-                    .setValue('real envido'),
-                new StringSelectMenuOptionBuilder()
-                    .setLabel('Falta envido')
-                    .setValue('falta envido'),
-                new StringSelectMenuOptionBuilder()
-                    .setLabel('Salir')
-                    .setValue('salir'),
-			);
+            const vale4SelectResponse = new StringSelectMenuBuilder()
+            .setCustomId('vale4Resp')
+            .setPlaceholder('Select your response!')
+            .addOptions(
+            new StringSelectMenuOptionBuilder()
+                .setLabel('Quiero')
+                .setValue('acepto'),
+            new StringSelectMenuOptionBuilder()
+                .setLabel('No quiero')
+                .setValue('rechazo'));
 
-            const envSelectResponse3= new StringSelectMenuBuilder()
-                .setCustomId('envResp')
-                .setPlaceholder('Select your response!')
-                .addOptions(
-                new StringSelectMenuOptionBuilder()
-                    .setLabel('Acepto')
-                    .setValue('acepto'),
-                new StringSelectMenuOptionBuilder()
-                    .setLabel('No acepto')
-                    .setValue('rechazo'),
-                new StringSelectMenuOptionBuilder()
-                    .setLabel('Falta envido')
-                    .setValue('falta envido'),
-                new StringSelectMenuOptionBuilder()
-                    .setLabel('Salir')
-                    .setValue('salir'),
-			);
+            let rechazoTruco = false;
+            let jugarEnvido = true;
+            if(round1RivalInteraction.values[0] == "truco"){
+                let trucoRow = new ActionRowBuilder()
+                .addComponents(trucoSelectResponseRound1);
 
-            const envSelectResponse4= new StringSelectMenuBuilder()
-                .setCustomId('envResp')
-                .setPlaceholder('Select your response!')
-                .addOptions(
-                new StringSelectMenuOptionBuilder()
-                    .setLabel('Acepto')
-                    .setValue('acepto'),
-                new StringSelectMenuOptionBuilder()
-                    .setLabel('No acepto')
-                    .setValue('rechazo'),
-                new StringSelectMenuOptionBuilder()
-                    .setLabel('Salir')
-                    .setValue('salir'),
-			);
+                let respTrucoMsg= await round1response.reply({
+                    content:`${user} aceptas el ${round1RivalInteraction.values[0]}`,
+                    components:[trucoRow],
+                })
 
-            round1response = await round1response.edit({
-                content:`${rival} seleccionó ${round1RivalInteraction.values[0]}`,
-                components:[],
-                embeds:[]
-            })
-            if(round1RivalInteraction.values[0] == 'envido'){ //first round envido
-                
-                const interR1 = await compRoundEnvido(envSelectResponse, round1RivalInteraction, round1response, user, collectorUserFilter);
+                let respTruco = await respTrucoMsg.awaitMessageComponent({collectorUserFilter, componentType:3,time:60000});
 
-                if(interR1[0].values[0] == 'acepto' ){
-                    game.playEnvido(true);
-                }else if(interR1[0].values[0] == 'rechazo'){
-                    game.playEnvido(false);
-                }else if(interR1[0].values[0] == 'envido'){   //envido envido
-                    game.playEnvido(true);
-                    const interR2 = await compRoundEnvido(envSelectResponse2, interR1[0],interR1[1],rival, collectorRivalFilter);
+                respTrucoMsg = await respTrucoMsg.edit({
+                    content:`${user} seleccionó ${respTruco.values[0]}`,
+                    components:[],
+                    embeds:[]
+                })
+                if(respTruco.values[0] == "envido" || respTruco.values[0] == "falta envido" || respTruco.values[0] == "real envido"){
+                    await roundEnvido(respTruco, respTrucoMsg, game, rival,user,collectorRivalFilter, collectorUserFilter);
+                }else if(respTruco.values[0] == "acepto"){
+                    jugarEnvido = false;
+                    game.playTruco(true);
+                }else if(respTruco.values[0] == "rechazo"){
+                    rechazoTruco = true;
+                    game.playTruco(false);
+                }else if(respTruco.values[0] == "retruco"){
+                    jugarEnvido = false;
+                    game.playTruco(true);
 
-                    if(interR2[0].values[0] == 'acepto'){
-                        game.playEnvido(true);
-                    }else if(interR2[0].values[0] == 'rechazo'){
-                        game.playEnvido(false);
-                    }else if(interR2[0].values[0] == 'real envido'){   //envido envido real envido
-                        game.playEnvido(true);
-                        const interR3 = await compRoundEnvido(envSelectResponse3,interR2[0],interR2[1],user,collectorUserFilter);
+                    let retrucoRow = new ActionRowBuilder()
+                    .addComponents(retrucoSelectResponse);
 
-                        if(interR3[0].values[0] == 'acepto'){
-                            game.playRenvido(true);
-                        }else if(interR3[0].values[0] == 'rechazo'){
-                            game.playRenvido(false);
-                        }else if(interR3[0].values[0] == 'falta envido'){  //envido envido real envido falta envido
-                            game.playRenvido(true);
-                            game.playFenvido(true);
-                        }
+                    let respreTrucoMsg = await respTrucoMsg.reply({
+                        content:`${rival} aceptas el ${respTruco.values[0]}`,
+                        components:[retrucoRow],
+                    })
 
-                    }else if(interR2[0].values[0] == 'falta envido'){   //envido envido falta envido
-                        game.playEnvido(true);
-
-                        const interR3 = await compRoundEnvido(envSelectResponse4, interR2[0], interR2[1],rival, collectorRivalFilter);
-
-                        if(interR3[0].values[0] == 'acepto'){
-                            game.playFenvido(true);
-                        }else if(interR3[0].values[0] == 'rechazo'){
-                            game.playFenvido(false);
-                        }
-                    }
-                }else if(interR1[0].values[0] == 'real envido'){  //envido real envido
-                    game.playEnvido(true);
+                    let respRetruco =await respreTrucoMsg.awaitMessageComponent({collectorRivalFilter, componentType:3,time:60000});
                     
-                    const interR2 =await compRoundEnvido(envSelectResponse3, interR1[0], interR1[1],rival, collectorRivalFilter);
+                    respreTrucoMsg = await respTrucoMsg.edit({
+                        content:`${rival} seleccionó ${respRetruco.values[0]}`,
+                        components:[],
+                        embeds:[]
+                    })
 
-                    if(interR2[0].values[0] == 'acepto'){
-                        game.playRenvido(true);
-                    }else if (interR2[0].values[0] == 'rechazo'){
-                        game.playRenvido(false);
-                    }else if(interR2[0].values[0] == 'falta envido'){ //envido real envido falta envido
-                        game.playRenvido(true);
+                    if(respRetruco.values[0] == "acepto"){
+                        game.playRetruco(true);
+                    }else if(respRetruco.values[0] == "rechazo"){
+                        rechazoTruco = true;
+                        game.playRetruco(true);
+                    }else if(respRetruco.values[0] == "vale cuatro"){
+                        game.playRetruco(true);
 
-                        const interR3 = await compRoundEnvido(envSelectResponse4,interR2[0],interR2[1],user, collectorUserFilter);
+                        let vale4row = new ActionRowBuilder()
+                        .addComponents(vale4SelectResponse);
 
-                        if(interR3[0].values[0] == 'acepto'){
-                            game.playFenvido(true);
-                        }else if(interR3[0].values[0] == ' rechazo'){
-                            game.playFenvido(false);
+                        let respvaleTrucoMsg = await respreTrucoMsg.reply({
+                            content: `${user} aceptas el ${respRetruco.values[0]}`,
+                            components:[vale4row],
+                        });
+
+                        let respValetruco = await respvaleTrucoMsg.awaitMessageComponent({collectorUserFilter, componentType:3,time:60000})
+                        
+                        respvaleTrucoMsg = await respvaleTrucoMsg.edit({
+                            content: `${user} seleccionó ${respValetruco.values[0]}`,
+                            components:[],
+                            embeds:[]
+                        })
+
+                        if(respValetruco.values[0]== "acepto"){
+                            game.playValeCuatro(true);
+                        }else if(respValetruco.values[0] == "rechazo"){
+                            rechazoTruco = true;
+                            game.playValeCuatro(false);
                         }
-                    }
-                }else if(interR1[0].values[0] == 'falta envido'){  //envido falta envido
-                    game.playEnvido(true);
-
-                    const interR2 = await compRoundEnvido(envSelectResponse4, interR1[0], interR1[1],rival, collectorRivalFilter);
-
-                    if(interR2[0].values[0] == 'acepto'){
-                        game.playFenvido(true);
-                    }else if(interR2[0].values[0] == 'rechazo'){
-                        game.playFenvido(false);
-                    }
+                    } 
                 }
-            }else if(round1RivalInteraction.values[0] == 'real envido'){ // first round real envido
-            
-                const interR1 = await compRoundEnvido(envSelectResponse3, round1RivalInteraction, round1response, rival, collectorRivalFilter);
-
-                if(interR1[0].values[0] == 'acepto'){
-                    game.playRenvido(true);
-                }else if(interR1[0].values[0] =='rechazo'){
-                    game.playRenvido(false);
-                }else if(interR1[0].values[0] == 'falta envido'){  //real envido falta envido
-                    game.playRenvido(true);
-
-                    const interR2 = await compRoundEnvido(envSelectResponse4, interR1[0], interR1[1], user, collectorUserFilter);
-                    if(interR2[0].values[0] == 'acepto'){
-                        game.playFenvido(true);
-                    }else if(interR2[0].values[0] == 'rechazo'){
-                        game.playFenvido(false);
-                    }
-                }
-
-            }else if(round1RivalInteraction.values[0] == 'falta envido'){// first round falta envido
-                const interR1 = await compRoundEnvido(envSelectResponse4, round1RivalInteraction, round1response, rival, collectorRivalFilter);
-                if(interR1[0].values[0] == 'acepto'){
-                    game.playRenvido(true);
-                }else if(interR1[0].values[0] =='rechazo'){
-                    game.playRenvido(false);
-                }
+            }else if(round1RivalInteraction.values[0] == '0' || round1RivalInteraction.values[0] == '1' || round1RivalInteraction.values[0] == '2'){
+                rivalOb.useCard(rivalOb.getHand[parseInt(round1RivalInteraction.values[0])]);
+                game.showTable(round1response);
+            }
+            if(jugarEnvido && !rechazoTruco){
+                await roundEnvido(round1RivalInteraction, round1response, game, user, rival, collectorUserFilter, collectorRivalFilter);
             }
 
         }catch(e){
