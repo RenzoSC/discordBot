@@ -826,14 +826,14 @@ async function selectionCardRound(lastMsg, game, caller, target,  callerOb, targ
     .setPlaceholder('Select your move!')
     .addOptions('Salir');
 
-    selectResponse = addCardOptions(selectResponse, caller);
+    selectResponse = addCardOptions(selectResponse, callerOb);
 
     let selectResponseTarget = new StringSelectMenuBuilder()
     .setCustomId('selectRespTarget')
     .setPlaceholder('Select your move!')
     .addOptions('Salir');
 
-    selectResponseTarget = addCardOptions(selectResponseTarget, target);
+    selectResponseTarget = addCardOptions(selectResponseTarget, targetOb);
 
     let roundRow = new ActionRowBuilder()
     .addComponents(selectResponse);
@@ -855,10 +855,11 @@ async function selectionCardRound(lastMsg, game, caller, target,  callerOb, targ
         cardCaller = callerOb.getHand[parseInt(roundInteraction.values[0])];
         callerOb.useCard(cardCaller);
         game.showTable(roundMsg);    //devuelve msg...
-
+        let targetRow = new ActionRowBuilder()
+        .addComponents(selectResponseTarget);
         let roundTargetMsg  = roundMsg.reply({
             content:`${target} que harás ahora?`,
-            components:[]
+            components:[targetRow]
         });
 
         let roundTargetInteraction = roundMsg.awaitMessageComponent({collectorTarget, componentType:3, time:60000});
@@ -880,6 +881,8 @@ async function selectionCardRound(lastMsg, game, caller, target,  callerOb, targ
 }
 
 async function playRound(lastInteraction, lastMsg, game, caller, target,callerOb,targetOb, collectorCaller, collectorTarget){
+    let needToPlayCards = true;
+    let cardCaller,cardTarget;
     let trucoSelectResponse = new StringSelectMenuBuilder()
     .setCustomId('trucoResp')
     .setPlaceholder('Select your response!')
@@ -932,19 +935,29 @@ async function playRound(lastInteraction, lastMsg, game, caller, target,callerOb
     );
     
     cardSelect = addCardOptions(cardSelect, callerOb);
+    
+    let selectResponseTarget = new StringSelectMenuBuilder()
+    .setCustomId('selectRespTarget')
+    .setPlaceholder('Select your move!')
+    .addOptions('Salir');
 
+    selectResponseTarget = addCardOptions(selectResponseTarget, targetOb);
     if(truco){
         cardSelect = cardSelect.addOptions(
-            new StringSelectMenuOptionBuilder().setValue('Truco').setValue('truco')
+            new StringSelectMenuOptionBuilder().setLabel('Truco').setValue('truco')
         )
+        selectResponseTarget = selectResponseTarget.addOptions(new StringSelectMenuOptionBuilder().setLabel('Truco').setValue('truco'));
     }else if(retruco){
         cardSelect = cardSelect.addOptions(
             new StringSelectMenuOptionBuilder().setValue('Quiero re truco').setValue('retruco')
         )
+        selectResponseTarget = selectResponseTarget.addOptions(new StringSelectMenuOptionBuilder().setLabel('Quiero retruco').setValue('retruco'));
     }else if(vale4){
         cardSelect = cardSelect.addOptions(
             new StringSelectMenuOptionBuilder().setValue('QUIERO VALE CUATRO').setValue('vale cuatro')
         )
+
+        selectResponseTarget = selectResponseTarget.addOptions(new StringSelectMenuOptionBuilder().setLabel('QUIERO VALE CUATRO').setValue('vale cuatro'));
     }
 
     let roundRow = new ActionRowBuilder()
@@ -1019,6 +1032,7 @@ async function playRound(lastInteraction, lastMsg, game, caller, target,callerOb
                     truco = false;
                     retruco = false;
                     vale4 = false;
+                    needToPlayCards = false;
                 }else if(vale4Interaction.values[0]== "rechazo"){
                     //termina juego
                 }
@@ -1027,6 +1041,7 @@ async function playRound(lastInteraction, lastMsg, game, caller, target,callerOb
                 truco = false;
                 retruco = false;
                 vale4 = true;
+                needToPlayCards = false;
             }else if(retrucoInteraction.values[0]== "rechazo"){
                 //termina juego
             } 
@@ -1035,10 +1050,11 @@ async function playRound(lastInteraction, lastMsg, game, caller, target,callerOb
             truco = false;
             retruco = true;
             vale4 = false;
+            needToPlayCards = false;
         }else if(trucoInteraction.values[0] == "rechazo"){
             //termina juego
         }
-    }else if(roundInteraction.values[0]){ //tmb puede ser retruco o vale cuatro (falta ver esos casos)
+    }else if(roundInteraction.values[0] == "retruco"){ //tmb puede ser retruco o vale cuatro (falta ver esos casos)
         let retrucoRow = new ActionRowBuilder()
         .addComponents(retrucoSelectResponse);
 
@@ -1060,14 +1076,14 @@ async function playRound(lastInteraction, lastMsg, game, caller, target,callerOb
             .addComponents(valeCuatroSelectResponse);
 
             let vale4Msg = await retrucoMsg.reply({
-                content:`${target} que harás ahora?`,
+                content:`${caller} que harás ahora?`,
                 components:[vale4row]
             });
 
             let vale4Interaction = await vale4Msg.awaitMessageComponent({collectorCaller, componentType:3, time:60000});
 
             vale4Msg = await vale4Msg.edit({
-                content:`${target} seleccionó ${vale4Interaction.values[0]}`,
+                content:`${caller} seleccionó ${vale4Interaction.values[0]}`,
                 components:[],
                 embeds:[]
             });
@@ -1077,12 +1093,16 @@ async function playRound(lastInteraction, lastMsg, game, caller, target,callerOb
                 truco = false;
                 retruco = false;
                 vale4 = false;
+                needToPlayCards=false;
+            }else if(vale4Interaction.values[0]=="rechazo"){
+                //termina ronda
             }
         }else if(retrucoInteraction.values[0] == "acepto"){
             selectionCardRound(retrucoMsg, game,caller,target,callerOb,targetOb, collectorCaller, collectorTarget);
             truco = false;
             retruco = false;
             vale4 = true;
+            needToPlayCards=false;
         }else if(retrucoInteraction.values[0] == "rechazo"){
             //termina ronda
         }
@@ -1095,7 +1115,7 @@ async function playRound(lastInteraction, lastMsg, game, caller, target,callerOb
             components:[vale4row]
         });
 
-        let vale4Interaction = await vale4Msg.awaitMessageComponent({collectorCaller, componentType:3, time:60000});
+        let vale4Interaction = await vale4Msg.awaitMessageComponent({collectorTarget, componentType:3, time:60000});
 
         vale4Msg = await vale4Msg.edit({
             content:`${target} seleccionó ${vale4Interaction.values[0]}`,
@@ -1103,18 +1123,191 @@ async function playRound(lastInteraction, lastMsg, game, caller, target,callerOb
             embeds:[]
         })
         if(vale4Interaction.values[0]== "acepto"){
-            selectionCardRound(vale4Msg,game,caller,target,callerOb,targetOb, collectorCaller, collectorTarget);
+            selectionCardRound(vale4Msg,game,caller,target,callerOb,targetOb, collectorCaller, collectorTarget); //acordate q tiene return
             truco = false;
             retruco = false;
             vale4 = false;
+            needToPlayCards=false;
         }else if(vale4Interaction.values[0]== "rechazo"){
             //termina juego
         }
     }
 
-    if(['0','1','2'].includes(roundInteraction.values[0])){
-        callerOb.useCard(callerOb.getHand[parseInt(roundInteraction.values[0])]);
+    if(['0','1','2'].includes(roundInteraction.values[0]) && needToPlayCards){
+        cardCaller = callerOb.getHand[parseInt(roundInteraction.values[0])];
+        callerOb.useCard(cardCaller);
         game.showTable(roundMsg);    //devuelve msg
+        let targetRow = new ActionRowBuilder()
+        .addComponents(selectResponseTarget);
+        let roundTargetMsg = roundMsg.reply({
+            content:`${target} que harás ahora?`,
+            components:[targetRow]
+        });
+
+        let roundTargetInteraction = roundMsg.awaitMessageComponent({collectorTarget, componentType:3, time:60000});
+
+        roundTargetMsg = roundTargetMsg.edit({
+            content:`${target} seleccionó ${roundTargetInteraction.values[0]}`,
+            components:[],
+            embeds:[]
+        })
+
+        if(roundTargetInteraction.values[0] == "truco"){
+            let trucoRow = new ActionRowBuilder()
+            .addComponents(trucoSelectResponse);
+    
+            let trucoMsg = await roundTargetMsg.reply({
+                content:`${caller} que harás ahora?`,
+                components:[trucoRow]
+            })
+    
+            let trucoInteraction = await trucoMsg.awaitMessageComponent({collectorCaller, componentType:3,time:60000});
+            
+            trucoMsg = await trucoMsg.edit({
+                content:`${caller} seleccionó ${trucoInteraction.values[0]}`,
+                components:[],
+                embeds:[]
+            })
+    
+            if(trucoInteraction.values[0]=="retruco"){
+                let retrucoRow = new ActionRowBuilder()
+                .addComponents(retrucoSelectResponse);
+    
+                let retrucoMsg = await trucoMsg.reply({
+                    content:`${target} que harás ahora?`,
+                    components:[retrucoRow]
+                })
+    
+                let retrucoInteraction = await retrucoMsg.awaitMessageComponent({collectorTarget, componentType:3, time:60000});
+    
+                retrucoMsg = await retrucoMsg.edit({
+                    content:`${target} seleccionó ${retrucoInteraction.values[0]}`,
+                    components:[],
+                    embeds:[],
+                })
+    
+                if(retrucoInteraction.values[0]=="vale cuatro"){
+                    let vale4row = new ActionRowBuilder()
+                    .addComponents(valeCuatroSelectResponse);
+    
+                    let vale4Msg = await retrucoMsg.reply({
+                        content:`${caller} que harás ahora?`,
+                        components:[vale4row]
+                    });
+    
+                    let vale4Interaction = await vale4Msg.awaitMessageComponent({collectorCaller, componentType:3, time:60000});
+    
+                    vale4Msg = await vale4Msg.edit({
+                        content:`${caller} seleccionó ${vale4Interaction.values[0]}`,
+                        components:[],
+                        embeds:[]
+                    })
+    
+                    if(vale4Interaction.values[0]== "acepto"){
+                        //elige carta target
+                        truco = false;
+                        retruco = false;
+                        vale4 = false;
+                        needToPlayCards = false;
+                    }else if(vale4Interaction.values[0]== "rechazo"){
+                        //termina juego
+                    }
+                }else if(retrucoInteraction.values[0] == "acepto"){
+                    //elige carta target
+                    truco = false;
+                    retruco = false;
+                    vale4 = true;
+                    needToPlayCards = false;
+                }else if(retrucoInteraction.values[0]== "rechazo"){
+                    //termina juego
+                } 
+            }else if(trucoInteraction.values[0] == "acepto"){
+                //elige carta target
+                truco = false;
+                retruco = true;
+                vale4 = false;
+                needToPlayCards = false;
+            }else if(trucoInteraction.values[0] == "rechazo"){
+                //termina juego
+            }
+        }else if(roundTargetInteraction.values[0] == "retruco"){ //tmb puede ser retruco o vale cuatro (falta ver esos casos)
+            let retrucoRow = new ActionRowBuilder()
+            .addComponents(retrucoSelectResponse);
+    
+            let retrucoMsg = await roundTargetMsg.reply({
+                content:`${caller} que harás ahora?`,
+                components:[retrucoRow]
+            })
+    
+            let retrucoInteraction = await retrucoMsg.awaitMessageComponent({collectorCaller, componentType:3,time:60000});
+            
+            retrucoMsg = await retrucoMsg.edit({
+                content:`${caller} seleccionó ${retrucoInteraction.values[0]}`,
+                components:[],
+                embeds:[]
+            })
+    
+            if(retrucoInteraction.values[0] == "vale cuatro"){
+                let vale4row = new ActionRowBuilder()
+                .addComponents(valeCuatroSelectResponse);
+    
+                let vale4Msg = await retrucoMsg.reply({
+                    content:`${target} que harás ahora?`,
+                    components:[vale4row]
+                });
+    
+                let vale4Interaction = await vale4Msg.awaitMessageComponent({collectorTarget, componentType:3, time:60000});
+    
+                vale4Msg = await vale4Msg.edit({
+                    content:`${target} seleccionó ${vale4Interaction.values[0]}`,
+                    components:[],
+                    embeds:[]
+                });
+    
+                if(vale4Interaction.values[0]== "acepto"){
+                    //target juega cartas
+                    truco = false;
+                    retruco = false;
+                    vale4 = false;
+                    needToPlayCards=false;
+                }else if(vale4Interaction.values[0]=="rechazo"){
+                    //termina ronda
+                }
+            }else if(retrucoInteraction.values[0] == "acepto"){
+                //target juega cartas
+                truco = false;
+                retruco = false;
+                vale4 = true;
+                needToPlayCards=false;
+            }else if(retrucoInteraction.values[0] == "rechazo"){
+                //termina ronda
+            }
+        }else if(roundTargetInteraction.values[0]== "vale cuatro"){
+            let vale4row = new ActionRowBuilder()
+            .addComponents(valeCuatroSelectResponse);
+    
+            let vale4Msg = await roundTargetMsg.reply({
+                content:`${caller} que harás ahora?`,
+                components:[vale4row]
+            });
+    
+            let vale4Interaction = await vale4Msg.awaitMessageComponent({collectorCaller, componentType:3, time:60000});
+    
+            vale4Msg = await vale4Msg.edit({
+                content:`${caller} seleccionó ${vale4Interaction.values[0]}`,
+                components:[],
+                embeds:[]
+            })
+            if(vale4Interaction.values[0]== "acepto"){
+                //target juega cartes
+                truco = false;
+                retruco = false;
+                vale4 = false;
+                needToPlayCards=false;
+            }else if(vale4Interaction.values[0]== "rechazo"){
+                //termina juego
+            }
+        }
     }
     return {"winner":caller,"loser":target,"lastInteraction":lastInteraction,"lastMsg":lastMsg};
 }
