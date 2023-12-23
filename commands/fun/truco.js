@@ -64,11 +64,12 @@ class Player{
 }
 
 class Card{
-    constructor(palo,value,pointvalue){
+    constructor(palo,value,pointvalue, valorTruco){
         this.type = palo;
         this.value = pointvalue;
         this.image = `./images/cards/${palo}/${value}.jpg`;
         this.name = `${value} de ${palo}`;
+        this.trucoValue = valorTruco;
     }
 
     get getType(){
@@ -86,6 +87,10 @@ class Card{
     get getImage(){
         return this.image;
     }
+
+    get getTrucoValue(){
+        return this.trucoValue;
+    }
 } 
 
 class Baraja{
@@ -102,9 +107,23 @@ class Baraja{
         for (const palo of palos){
             for(const valor of valores){
                 if([10,11,12].includes(valor)){
-                    this.cartas.push(new Card(palo,valor,0));
+                    this.cartas.push(new Card(palo,valor,0,valor));
+                }else if(valor== 1 && palo == 'espadas'){             //Macho
+                    this.cartas.push(new Card(palo,valor,valor,20));  
+                }else if(valor == 1 && palo == 'bastos'){             //Hembra
+                    this.cartas.push(new Card(palo,valor,valor,19)) 
+                }else if(valor == 7 && palo == 'espadas'){            // 7 de espada
+                    this.cartas.push(new Card(palo,valor,valor,18))
+                }else if(valor == 7 && palo == 'oros'){               // 7 de oro
+                    this.cartas.push(new Card(palo,valor,valor,17))
+                }else if(valor == 3){                                 // 3's 
+                    this.cartas.push(new Card(palo,valor,valor,16))
+                }else if(valor == 2){                                 // 2's
+                    this.cartas.push(new Card(palo,valor,valor,15))
+                }else if(valor == 1 && (palos == 'oros' || palos == 'copas')){  //1 de copas y 1 de oro
+                    this.cartas.push(new Card(palo,valor,valor, 14))
                 }else{
-                    this.cartas.push(new Card(palo,valor,valor));
+                    this.cartas.push(new Card(palo,valor,valor,valor));
                 }
             }
         }
@@ -149,7 +168,7 @@ class Table{
         this.user = new Player(user, iconUser);
         this.rival = new Player(rival, iconRival);
         this.round = 0;
-        this.firstStageWon = user;
+        this.firstStageWon = null;
         this.winTrack = [];
         this.baraja = new Baraja();
         this.pointsRoundIG = 1;
@@ -529,7 +548,7 @@ let vale4 = false;
 async function trucoFirstRound(selectResponse, responseMsg, responseInteraction, game, user, rival, collectorUserFilter, collectorRivalFilter, retrucoSelectResponse, vale4SelectResponse){
     let trucoRow = new ActionRowBuilder()
     .addComponents(selectResponse);
-
+    let lastMsg;
     let respTrucoMsg= await responseMsg.reply({
         content:`${user} aceptas el ${responseInteraction.values[0]}`,
         components:[trucoRow],
@@ -544,13 +563,16 @@ async function trucoFirstRound(selectResponse, responseMsg, responseInteraction,
     })
     if(respTruco.values[0] == "envido" || respTruco.values[0] == "falta envido" || respTruco.values[0] == "real envido"){
         jugarEnvido = false;
-        await roundEnvido(respTruco, respTrucoMsg, game, rival,user,collectorRivalFilter, collectorUserFilter);
+        const round = await roundEnvido(respTruco, respTrucoMsg, game, rival,user,collectorRivalFilter, collectorUserFilter);
+        lastMsg = round.lastMsg;
     }else if(respTruco.values[0] == "acepto"){
         jugarEnvido = false;
         game.playTruco(true);
+        lastMsg = respTrucoMsg;
     }else if(respTruco.values[0] == "rechazo"){
         rechazoTruco = true;
         game.playTruco(false);
+        lastMsg = respTrucoMsg;
     }else if(respTruco.values[0] == "retruco"){
         jugarEnvido = false;
         game.playTruco(true);
@@ -562,10 +584,8 @@ async function trucoFirstRound(selectResponse, responseMsg, responseInteraction,
             content:`${rival} aceptas el ${respTruco.values[0]}`,
             components:[retrucoRow],
         })
-
-        let respRetruco =await respreTrucoMsg.awaitMessageComponent({collectorRivalFilter, componentType:3,time:60000});
-                    
-        respreTrucoMsg = await respTrucoMsg.edit({
+        let respRetruco =await respreTrucoMsg.awaitMessageComponent({collectorRivalFilter, componentType:3,time:60000});           
+        respreTrucoMsg = await respreTrucoMsg.edit({
             content:`${rival} seleccionó ${respRetruco.values[0]}`,
             components:[],
             embeds:[]
@@ -573,9 +593,11 @@ async function trucoFirstRound(selectResponse, responseMsg, responseInteraction,
 
         if(respRetruco.values[0] == "acepto"){
             game.playRetruco(true);
+            lastMsg = respreTrucoMsg;
         }else if(respRetruco.values[0] == "rechazo"){
             rechazoTruco = true;
             game.playRetruco(true);
+            lastMsg = respreTrucoMsg;
         }else if(respRetruco.values[0] == "vale cuatro"){
             game.playRetruco(true);
 
@@ -597,12 +619,15 @@ async function trucoFirstRound(selectResponse, responseMsg, responseInteraction,
 
             if(respValetruco.values[0]== "acepto"){
                 game.playValeCuatro(true);
+                lastMsg = respvaleTrucoMsg;
             }else if(respValetruco.values[0] == "rechazo"){
                 rechazoTruco = true;
                 game.playValeCuatro(false);
+                lastMsg = respvaleTrucoMsg;
             }
         } 
-    }        
+    }       
+    return lastMsg; 
 }
 
 function addCardOptions(selectMenu, user){
@@ -619,7 +644,7 @@ function addCardOptions(selectMenu, user){
 //return {"winner":caller,"loser":target,"lastInteraction":lastInteraction,"lastMsg":lastMsg};
                                                          //user  rival
 async function selectionCardRound(lastMsg, game, caller, target,  callerOb, targetOb, collectorCaller, collectorTarget){   //falta agregar const truco retruco etc
-    let cardCaller,cardTarget;
+    let cardCaller,cardTarget, lastMsgBis, lastInteraction;
 
     let selectResponse = new StringSelectMenuBuilder()
     .setCustomId('selectResp')
@@ -673,16 +698,27 @@ async function selectionCardRound(lastMsg, game, caller, target,  callerOb, targ
         if(['0','1','2'].includes(roundTargetInteraction.values[0])){
             cardTarget = targetOb.getHand[parseInt(roundTargetInteraction.values[0])];
             targetOb.useCard(cardTarget);
-            await game.showTable(roundTargetMsg);
+            lastMsgBis = await game.showTable(roundTargetMsg);
+            lastInteraction = roundTargetInteraction;
         }
     }
 
-    return {"cardC":cardCaller,"cardT":cardTarget};
+    return {"cardC":cardCaller,"cardT":cardTarget, 'lastMsg':lastMsgBis, 'lastInteraction':lastInteraction};
 }
 
 async function playRound(lastMsg, game, caller, target,callerOb,targetOb, collectorCaller, collectorTarget){
+    /* 
+    Funcion que representa una ronda (en la que se puede cantar truco etc)
+    
+    Caller es el que empieza y Target es el que responde a la jugada del caller
+    
+    Necesitas el ultimo mensaje que se envió para poder usar esta función
+    
+    Devuelve los resultados de la ronda asi como también el ultimo mensaje que se envió y la ultima interacción (por si los necesita usar luego)
+    */
+
     let needToPlayCards = true;
-    let cardCaller,cardTarget;
+    let cardCaller,cardTarget, lastMsgBis, lastInteractionBis;
     let trucoSelectResponse = new StringSelectMenuBuilder()
     .setCustomId('trucoResp')
     .setPlaceholder('Select your response!')
@@ -753,12 +789,12 @@ async function playRound(lastMsg, game, caller, target,callerOb,targetOb, collec
         selectResponseTarget = selectResponseTarget.addOptions(new StringSelectMenuOptionBuilder().setLabel('Truco').setValue('truco'));
     }else if(retruco){
         cardSelect = cardSelect.addOptions(
-            new StringSelectMenuOptionBuilder().setValue('Quiero re truco').setValue('retruco')
+            new StringSelectMenuOptionBuilder().setLabel('Quiero re truco').setValue('retruco')
         )
         selectResponseTarget = selectResponseTarget.addOptions(new StringSelectMenuOptionBuilder().setLabel('Quiero retruco').setValue('retruco'));
     }else if(vale4){
         cardSelect = cardSelect.addOptions(
-            new StringSelectMenuOptionBuilder().setValue('QUIERO VALE CUATRO').setValue('vale cuatro')
+            new StringSelectMenuOptionBuilder().setLabel('QUIERO VALE CUATRO').setValue('vale cuatro')
         )
 
         selectResponseTarget = selectResponseTarget.addOptions(new StringSelectMenuOptionBuilder().setLabel('QUIERO VALE CUATRO').setValue('vale cuatro'));
@@ -851,6 +887,8 @@ async function playRound(lastMsg, game, caller, target,callerOb,targetOb, collec
                     retruco = false;
                     vale4 = false;
                     needToPlayCards = false;
+                    lastMsgBis = cardSelected.lastMsg;
+                    lastInteractionBis = cardSelected.lastInteraction;
                 }else if(vale4Interaction.values[0]== "rechazo"){
                     //termina juego
                 }
@@ -863,6 +901,8 @@ async function playRound(lastMsg, game, caller, target,callerOb,targetOb, collec
                 retruco = false;
                 vale4 = true;
                 needToPlayCards = false;
+                lastMsgBis = cardSelected.lastMsg;
+                lastInteractionBis = cardSelected.lastInteraction;
             }else if(retrucoInteraction.values[0]== "rechazo"){
                 //termina juego
             } 
@@ -875,6 +915,8 @@ async function playRound(lastMsg, game, caller, target,callerOb,targetOb, collec
             retruco = true;
             vale4 = false;
             needToPlayCards = false;
+            lastMsgBis = cardSelected.lastMsg;
+            lastInteractionBis = cardSelected.lastInteraction;
         }else if(trucoInteraction.values[0] == "rechazo"){
             //termina juego
         }
@@ -921,6 +963,8 @@ async function playRound(lastMsg, game, caller, target,callerOb,targetOb, collec
                 retruco = false;
                 vale4 = false;
                 needToPlayCards=false;
+                lastMsgBis = cardSelected.lastMsg;
+                lastInteractionBis = cardSelected.lastInteraction;
             }else if(vale4Interaction.values[0]=="rechazo"){
                 //termina ronda
             }
@@ -933,6 +977,8 @@ async function playRound(lastMsg, game, caller, target,callerOb,targetOb, collec
             retruco = false;
             vale4 = true;
             needToPlayCards=false;
+            lastMsgBis = cardSelected.lastMsg;
+            lastInteractionBis = cardSelected.lastInteraction;
         }else if(retrucoInteraction.values[0] == "rechazo"){
             //termina ronda
         }
@@ -961,6 +1007,8 @@ async function playRound(lastMsg, game, caller, target,callerOb,targetOb, collec
             retruco = false;
             vale4 = false;
             needToPlayCards=false;
+            lastMsgBis = cardSelected.lastMsg;
+            lastInteractionBis = cardSelected.lastInteraction;
         }else if(vale4Interaction.values[0]== "rechazo"){
             //termina juego
         }
@@ -974,7 +1022,7 @@ async function playRound(lastMsg, game, caller, target,callerOb,targetOb, collec
             content:`${target} que harás ahora?`,
             components:[targetRow]
         });
-                //aca hay un problema :o
+                
         let roundTargetInteraction =await roundTargetMsg.awaitMessageComponent({collectorTarget, componentType:3, time:60000});
 
         roundTargetMsg = await roundTargetMsg.edit({
@@ -1053,7 +1101,8 @@ async function playRound(lastMsg, game, caller, target,callerOb,targetOb, collec
                         if(['0','1','2'].includes(cardTargetInteraction.values[0])){
                             cardTarget = targetOb.getHand[parseInt(cardTargetInteraction.values[0])];
                             targetOb.useCard(cardTarget);
-                            await game.showTable(cardMsgTarget);
+                            lastMsgBis =await game.showTable(cardMsgTarget);
+                            lastInteractionBis= cardTargetInteraction;
                         }
                         truco = false;
                         retruco = false;
@@ -1081,7 +1130,8 @@ async function playRound(lastMsg, game, caller, target,callerOb,targetOb, collec
                     if(['0','1','2'].includes(cardTargetInteraction.values[0])){
                         cardTarget = targetOb.getHand[parseInt(cardTargetInteraction.values[0])];
                         targetOb.useCard(cardTarget);
-                        await game.showTable(cardMsgTarget);
+                        lastMsgBis =await game.showTable(cardMsgTarget);
+                        lastInteractionBis = cardTargetInteraction;
                     }
                     truco = false;
                     retruco = false;
@@ -1109,7 +1159,8 @@ async function playRound(lastMsg, game, caller, target,callerOb,targetOb, collec
                 if(['0','1','2'].includes(cardTargetInteraction.values[0])){
                     cardTarget = targetOb.getHand[parseInt(cardTargetInteraction.values[0])];
                     targetOb.useCard(cardTarget);
-                    await game.showTable(cardMsgTarget);
+                    lastMsgBis = await game.showTable(cardMsgTarget);
+                    lastInteractionBis = cardTargetInteraction;
                 }
                 truco = false;
                 retruco = true;
@@ -1171,7 +1222,8 @@ async function playRound(lastMsg, game, caller, target,callerOb,targetOb, collec
                     if(['0','1','2'].includes(cardTargetInteraction.values[0])){
                         cardTarget = targetOb.getHand[parseInt(cardTargetInteraction.values[0])];
                         targetOb.useCard(cardTarget);
-                        await game.showTable(cardMsgTarget);
+                        lastMsgBis =await game.showTable(cardMsgTarget);
+                        lastInteractionBis = cardTargetInteraction;
                     }
                     truco = false;
                     retruco = false;
@@ -1199,7 +1251,8 @@ async function playRound(lastMsg, game, caller, target,callerOb,targetOb, collec
                 if(['0','1','2'].includes(cardTargetInteraction.values[0])){
                     cardTarget = targetOb.getHand[parseInt(cardTargetInteraction.values[0])];
                     targetOb.useCard(cardTarget);
-                    await game.showTable(cardMsgTarget);
+                    lastMsgBis =await game.showTable(cardMsgTarget);
+                    lastInteractionBis = cardTargetInteraction;
                 }
                 truco = false;
                 retruco = false;
@@ -1243,7 +1296,8 @@ async function playRound(lastMsg, game, caller, target,callerOb,targetOb, collec
                 if(['0','1','2'].includes(cardTargetInteraction.values[0])){
                     cardTarget = targetOb.getHand[parseInt(cardTargetInteraction.values[0])];
                     targetOb.useCard(cardTarget);
-                    await game.showTable(cardMsgTarget);
+                    lastMsgBis=await game.showTable(cardMsgTarget);
+                    lastInteractionBis=cardTargetInteraction;
                 }
                 truco = false;
                 retruco = false;
@@ -1256,10 +1310,20 @@ async function playRound(lastMsg, game, caller, target,callerOb,targetOb, collec
             cardTarget = targetOb.getHand[parseInt(roundTargetInteraction.values[0])];
 
             targetOb.useCard(cardTarget);
-            await game.showTable(roundTargetMsg);
+            lastMsgBis=await game.showTable(roundTargetMsg);
+            lastInteractionBis = roundTargetInteraction;
         }
     }
-    return {"winner":caller,"loser":target,"lastInteraction":0,"lastMsg":lastMsg};
+    let pointsCaller = cardCaller.getTrucoValue;
+    let pointsTarget = cardTarget.getTrucoValue;
+    
+    if(pointsCaller > pointsTarget){
+        return {"winnerOb":callerOb,"loserOb":targetOb,"winner":caller,"loser":target,"draw":false,"lastInteraction":lastInteractionBis,"lastMsg":lastMsgBis, "winnerCol":collectorCaller, "loserCol":collectorTarget};  
+    }else if(pointsCaller < pointsTarget){
+        return {"winnerOb":targetOb,"loserOb":callerOb,"winner":target,"loser":caller,"draw":false,"lastInteraction":lastInteractionBis,"lastMsg":lastMsgBis, "winnerCol":collectorTarget, "loserCol":collectorCaller};  
+    }else{
+        return {"winnerOb":callerOb,"loserOb":targetOb,"winner":caller,"loser":target,"draw":true,"lastInteraction":lastInteractionBis,"lastMsg":lastMsgBis, "winnerCol":collectorCaller, "loserCol":collectorTarget};  
+    }
 }
 
 
@@ -1300,7 +1364,9 @@ module.exports = {
 
         const collectorRivalFilter = (i) => i.user.id == rival.id;
         const collectorUserFilter = (i) => i.user.id == user.id;
-
+        let firstRound, secondRound, thirdRound;
+        let rivalFirstCard, userFirstCard;
+        let firstRoundDone = false;
         try{
             const cortarInteraction = await rivalresponse.awaitMessageComponent({ collectorRivalFilter, componentType: 2, time: 60000 });
 
@@ -1443,12 +1509,15 @@ module.exports = {
                 .setLabel('No quiero')
                 .setValue('rechazo'));
 
+            let lastMsgFirstRound;
             if(round1RivalInteraction.values[0] == "truco"){
-
-                await trucoFirstRound(trucoSelectResponseRound1, round1response, round1RivalInteraction, game, rival, user, collectorRivalFilter, collectorUserFilter, retrucoSelectResponse, vale4SelectResponse);
-
+                truco = false;
+                retruco = true;
+                vale4 = false;
+                lastMsgFirstRound= await trucoFirstRound(trucoSelectResponseRound1, round1response, round1RivalInteraction, game, user, rival, collectorUserFilter, collectorRivalFilter, retrucoSelectResponse, vale4SelectResponse);
             }else if(round1RivalInteraction.values[0] == '0' || round1RivalInteraction.values[0] == '1' || round1RivalInteraction.values[0] == '2'){
-                rivalOb.useCard(rivalOb.getHand[parseInt(round1RivalInteraction.values[0])]);
+                rivalFirstCard = rivalOb.getHand[parseInt(round1RivalInteraction.values[0])];
+                rivalOb.useCard(rivalFirstCard);
                 await game.showTable(round1response);   //esto tmb devuelve un msg....
 
                 let cardRound1Row = new ActionRowBuilder()
@@ -1468,14 +1537,95 @@ module.exports = {
                 })
 
                 if(userCardResp.values[0] == "truco"){
-                    await trucoFirstRound(trucoSelectResponseRound1, userCardRespMsg, userCardResp, game, rival, user, collectorRivalFilter, collectorUserFilter, retrucoSelectResponse, vale4SelectResponse);
+                    truco = false;
+                    retruco = true;
+                    vale4 = false;
+                    let msg = await trucoFirstRound(trucoSelectResponseRound1, userCardRespMsg, userCardResp, game, rival, user, collectorRivalFilter, collectorUserFilter, retrucoSelectResponse, vale4SelectResponse);
+
+                    let selectCardUserFR = new StringSelectMenuBuilder()
+                    .setCustomId('trucoResp')
+                    .setPlaceholder('Select your response!')
+                    .addOptions(
+                    new StringSelectMenuOptionBuilder()
+                        .setLabel('Salir')
+                        .setValue('salir'))
+
+                    if(truco){
+                        selectCardUserFR = selectCardUserFR.addOptions(
+                        new StringSelectMenuOptionBuilder().setLabel('Truco').setValue('truco'))
+                    }else if(retruco){
+                        selectCardUserFR = selectCardUserFR.addOptions(
+                            new StringSelectMenuOptionBuilder().setLabel('Quiero re truco').setValue('retruco'))
+                    }else if(vale4){
+                        selectCardUserFR = selectCardUserFR.addOptions(
+                            new StringSelectMenuOptionBuilder().setLabel('QUIERO VALE CUATRO').setValue('vale cuatro'))
+                    }
+                    selectCardUserFR = addCardOptions(selectCardUserFR, userOb);
+                    let selectFRrow = new ActionRowBuilder()
+                    .addComponents(selectCardUserFR);
+
+                    let selectFRMsg = await msg.reply({
+                        content: `${user} que harás ahora?`,
+                        components:[selectFRrow],
+                    });
+
+                    let selectFRInteraction = await selectFRMsg.awaitMessageComponent({collectorUserFilter, componentType:3,time:60000});
+
+                    selectFRMsg = await selectFRMsg.edit({
+                        content:`${user} seleccionó ${userCardResp.values[0]}`,
+                        components:[],
+                        embeds:[]
+                    })
+
+                    if(['0','1','2'].includes(selectFRInteraction.values[0])){
+                        userFirstCard =userOb.getHand[parseInt(selectFRInteraction.values[0])];
+                        userOb.useCard(userFirstCard);
+                        let lastMsg = await game.showTable(selectFRMsg);
+                        lastMsgFirstRound = lastMsg;
+                        jugarEnvido = false;
+                        if(rivalFirstCard.getTrucoValue > userFirstCard.getTrucoValue){
+                            firstRound = {"winnerOb":rivalOb,"loserOb":userOb,"winner":rival, "loser":user,"draw":false, "lastInteraction":selectFRInteraction,"lastMsg":lastMsg,"winnerCol":collectorRivalFilter,"loserCol":collectorUserFilter};
+                        }else if(rivalFirstCard.getTrucoValue < userFirstCard.getTrucoValue){
+                            firstRound = {"winnerOb":userOb,"loserOb":rivalOb,"winner":user, "loser":rival,"draw":false, "lastInteraction":selectFRInteraction,"lastMsg":lastMsg,"winnerCol":collectorUserFilter,"loserCol":collectorRivalFilter};
+                        }else{
+                            firstRound = {"winnerOb":rivalOb,"loserOb":userOb,"winner":rival, "loser":user,"draw":true, "lastInteraction":selectFRInteraction,"lastMsg":lastMsg,"winnerCol":collectorRivalFilter,"loserCol":collectorUserFilter};
+                        }
+                        firstRoundDone = true;
+                        if(firstRound.draw){
+                            game.winRound(null);
+                            game.nextRound();
+                        }else{
+                            game.winRound(firstRound.winnerOb);
+                            game.nextRound();
+                        }
+                    }
                 }else if(userCardResp.values[0] == '0' || userCardResp.values[0] == '1' || userCardResp.values[0] == '2'){
-                    userOb.useCard(userOb.getHand[parseInt(userCardResp.values[0])]);
-                    await game.showTable(userCardRespMsg);    //devuelve msg
+                    userFirstCard =userOb.getHand[parseInt(userCardResp.values[0])]; 
+                    userOb.useCard(userFirstCard);
+                    let lassstmsg = await game.showTable(userCardRespMsg);    //devuelve msg
+
+                    lastMsgFirstRound = lassstmsg;
+                    jugarEnvido = false;
+                    if(rivalFirstCard.getTrucoValue > userFirstCard.getTrucoValue){
+                        firstRound = {"winnerOb":rivalOb,"loserOb":userOb,"winner":rival, "loser":user,"draw":false, "lastInteraction":userCardResp,"lastMsg":lassstmsg,"winnerCol":collectorRivalFilter,"loserCol":collectorUserFilter};
+                    }else if(rivalFirstCard.getTrucoValue < userFirstCard.getTrucoValue){
+                        firstRound = {"winnerOb":userOb,"loserOb":rivalOb,"winner":user, "loser":rival,"draw":false, "lastInteraction":userCardResp,"lastMsg":lassstmsg,"winnerCol":collectorUserFilter,"loserCol":collectorRivalFilter};
+                    }else{
+                        firstRound = {"winnerOb":rivalOb,"loserOb":userOb,"winner":rival, "loser":user,"draw":true, "lastInteraction":userCardResp,"lastMsg":lassstmsg,"winnerCol":collectorRivalFilter,"loserCol":collectorUserFilter};
+                    }
+                    firstRoundDone = true;
+                    if(firstRound.draw){
+                        game.winRound(null);
+                        game.nextRound();
+                    }else{
+                        game.winRound(firstRound.winnerOb);
+                        game.nextRound();
+                    }
                 }
 
                 if(jugarEnvido){
-                    await roundEnvido(userCardResp, userCardRespMsg, game,user,rival, collectorUserFilter, collectorRivalFilter);
+                    const round = await roundEnvido(userCardResp, userCardRespMsg, game,user,rival, collectorUserFilter, collectorRivalFilter);
+                    lastMsgFirstRound = round.lastMsg;
                 }
                 
                 if(rechazoTruco || userCardResp.values[0] == "salir"){
@@ -1483,12 +1633,23 @@ module.exports = {
                 }
             }
             if(jugarEnvido){
-                const round = await roundEnvido(round1RivalInteraction, round1response, game, user,rival, collectorUserFilter, collectorRivalFilter);   //intercambiar rival con user
+                const round = await roundEnvido(round1RivalInteraction, round1response, game, user,rival, collectorUserFilter, collectorRivalFilter);   
                 //primer jugador selecciona algun envido el otro debe contestar y ahora tocaria la parte de selección de cartas...
-
-                await playRound(round.lastMsg, game, rival, user, rivalOb, userOb, collectorRivalFilter, collectorUserFilter);
+                lastMsgFirstRound = round.lastMsg;
             }
+            if(!firstRoundDone){
+                firstRound = await playRound(lastMsgFirstRound, game, rival, user, rivalOb, userOb, collectorRivalFilter, collectorUserFilter); //problem
+                if(firstRound.draw){
+                    game.winRound(null);
+                    game.nextRound();
+                }else{
+                    game.winRound(firstRound.winnerOb);
+                    game.nextRound();
+                }
+            }
+            secondRound = await playRound(firstRound.lastMsg, game,firstRound.winner, firstRound.loser, firstRound.winnerOb, firstRound.loserOb, firstRound.winnerCol, firstRound.loserCol);
 
+            thirdRound = await playRound(secondRound.lastMsg, game, secondRound.winner, secondRound.loser, secondRound.winnerOb, secondRound.loserOb, secondRound.winnerCol, secondRound.loserCol);
         }catch(e){
             console.log(e);
             await interaction.editReply({ content: 'Confirmation not received within 1 minute, cancelling', components: [] });
