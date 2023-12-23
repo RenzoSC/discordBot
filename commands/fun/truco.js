@@ -173,6 +173,7 @@ class Table{
         this.baraja = new Baraja();
         this.pointsRoundIG = 1;
         this.pointsEnvido =0;
+        this.handWinTrack = []
     }
 
     startGame(cortar){
@@ -182,6 +183,10 @@ class Table{
 
     nextRound(){
         this.round +=1;
+    }
+
+    winHand(winner){
+        this.handWinTrack.push(winner);
     }
 
     winRound(winner){
@@ -302,6 +307,18 @@ class Table{
     
     get getRival(){
         return this.rival;
+    }
+
+    get getTrack(){
+        return this.winTrack;
+    }
+
+    get getFirstStageWon(){
+        return this.firstStageWon;
+    }
+
+    get getHandWinTrack(){
+        return this.handWinTrack;
     }
 }
 
@@ -1648,8 +1665,46 @@ module.exports = {
                 }
             }
             secondRound = await playRound(firstRound.lastMsg, game,firstRound.winner, firstRound.loser, firstRound.winnerOb, firstRound.loserOb, firstRound.winnerCol, firstRound.loserCol);
+            if(secondRound.draw){
+                game.winRound(null);
+                game.nextRound();
+            }else{
+                game.winRound(secondRound.winnerOb);
+                game.nextRound();
+            }
+            let track = game.getTrack;
+            if((track[0] == null && track[1] == null) || (track[0] != null && track[1]!= null)){
+                thirdRound = await playRound(secondRound.lastMsg, game, secondRound.winner, secondRound.loser, secondRound.winnerOb, secondRound.loserOb, secondRound.winnerCol, secondRound.loserCol);
 
-            thirdRound = await playRound(secondRound.lastMsg, game, secondRound.winner, secondRound.loser, secondRound.winnerOb, secondRound.loserOb, secondRound.winnerCol, secondRound.loserCol);
+                if(thirdRound.draw){
+                    game.winRound(null);
+                    game.nextRound();
+                }else{
+                    game.winRound(thirdRound.winnerOb);
+                    game.nextRound();
+                }
+
+                track = game.getTrack;
+
+                if(track[0] == null && track[1] == null && track[2] == null){
+                    game.winHand(rivalOb);
+                }else{
+                    game.winHand(track[2]);
+                }
+            }
+            if(track[1] == null){
+                let winner = game.getFirstStageWon;
+                game.winHand(winner);
+            }
+
+            if(track[0] == null){
+                let winner = secondRound.winner;
+                game.winHand(winner);
+            }
+            if(track[0] != null && (track[1] == track[0])){
+                game.winHand(track[0]);
+            }
+            //mensaje de quien ganó la ronda xd
         }catch(e){
             console.log(e);
             await interaction.editReply({ content: 'Confirmation not received within 1 minute, cancelling', components: [] });
