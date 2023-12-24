@@ -594,6 +594,9 @@ async function trucoFirstRound(selectResponse, responseMsg, responseInteraction,
         jugarEnvido = false;
         game.playTruco(true);
         lastMsg = respTrucoMsg;
+        truco = false;
+        retruco = true;
+        vale4 = false;
     }else if(respTruco.values[0] == "rechazo"){
         rechazoTruco = true;
         game.playTruco(false);
@@ -619,9 +622,12 @@ async function trucoFirstRound(selectResponse, responseMsg, responseInteraction,
         if(respRetruco.values[0] == "acepto"){
             game.playRetruco(true);
             lastMsg = respreTrucoMsg;
+            truco = false;
+            retruco = false;
+            vale4 = true;
         }else if(respRetruco.values[0] == "rechazo"){
             rechazoTruco = true;
-            game.playRetruco(true);
+            game.playRetruco(false);
             lastMsg = respreTrucoMsg;
         }else if(respRetruco.values[0] == "vale cuatro"){
             game.playRetruco(true);
@@ -645,6 +651,9 @@ async function trucoFirstRound(selectResponse, responseMsg, responseInteraction,
             if(respValetruco.values[0]== "acepto"){
                 game.playValeCuatro(true);
                 lastMsg = respvaleTrucoMsg;
+                truco = false;
+                retruco = false;
+                vale4 = false;
             }else if(respValetruco.values[0] == "rechazo"){
                 rechazoTruco = true;
                 game.playValeCuatro(false);
@@ -870,6 +879,7 @@ async function playRound(lastMsg, game, caller, target,callerOb,targetOb, collec
         })
 
         if(trucoInteraction.values[0]=="retruco"){
+            game.playTruco(true);
             let retrucoRow = new ActionRowBuilder()
             .addComponents(retrucoSelectResponse);
 
@@ -887,6 +897,7 @@ async function playRound(lastMsg, game, caller, target,callerOb,targetOb, collec
             })
 
             if(retrucoInteraction.values[0]=="vale cuatro"){
+                game.playRetruco(true);
                 let vale4row = new ActionRowBuilder()
                 .addComponents(valeCuatroSelectResponse);
 
@@ -904,6 +915,7 @@ async function playRound(lastMsg, game, caller, target,callerOb,targetOb, collec
                 })
 
                 if(vale4Interaction.values[0]== "acepto"){
+                    game.playValeCuatro(true);
                     let cardSelected =await selectionCardRound(vale4Msg,game,caller,target,callerOb,targetOb, collectorCaller, collectorTarget);
 
                     cardCaller = cardSelected.cardC;
@@ -915,9 +927,13 @@ async function playRound(lastMsg, game, caller, target,callerOb,targetOb, collec
                     lastMsgBis = cardSelected.lastMsg;
                     lastInteractionBis = cardSelected.lastInteraction;
                 }else if(vale4Interaction.values[0]== "rechazo"){
+                    game.playValeCuatro(false);
+                    rechazoTruco = true;
                     //termina juego
                 }
             }else if(retrucoInteraction.values[0] == "acepto"){
+                game.playRetruco(true);
+
                 let cardSelected = await selectionCardRound(retrucoMsg,game,caller,target,callerOb,targetOb, collectorCaller, collectorTarget);
 
                 cardCaller =cardSelected.cardC;
@@ -929,9 +945,12 @@ async function playRound(lastMsg, game, caller, target,callerOb,targetOb, collec
                 lastMsgBis = cardSelected.lastMsg;
                 lastInteractionBis = cardSelected.lastInteraction;
             }else if(retrucoInteraction.values[0]== "rechazo"){
+                game.playRetruco(false);
+                rechazoTruco = true;
                 //termina juego
             } 
         }else if(trucoInteraction.values[0] == "acepto"){
+            game.playTruco(true);
             let cardSelected = await selectionCardRound(trucoMsg,game,caller,target,callerOb,targetOb, collectorCaller, collectorTarget);
 
             cardCaller =cardSelected.cardC;
@@ -943,9 +962,11 @@ async function playRound(lastMsg, game, caller, target,callerOb,targetOb, collec
             lastMsgBis = cardSelected.lastMsg;
             lastInteractionBis = cardSelected.lastInteraction;
         }else if(trucoInteraction.values[0] == "rechazo"){
+            game.playTruco(false);
+            rechazoTruco = true
             //termina juego
         }
-    }else if(roundInteraction.values[0] == "retruco"){ //tmb puede ser retruco o vale cuatro (falta ver esos casos)
+    }else if(roundInteraction.values[0] == "retruco"){
         let retrucoRow = new ActionRowBuilder()
         .addComponents(retrucoSelectResponse);
 
@@ -963,6 +984,7 @@ async function playRound(lastMsg, game, caller, target,callerOb,targetOb, collec
         })
 
         if(retrucoInteraction.values[0] == "vale cuatro"){
+            game.playRetruco(true);
             let vale4row = new ActionRowBuilder()
             .addComponents(valeCuatroSelectResponse);
 
@@ -980,6 +1002,7 @@ async function playRound(lastMsg, game, caller, target,callerOb,targetOb, collec
             });
 
             if(vale4Interaction.values[0]== "acepto"){
+                game.playValeCuatro(true);
                 let cardSelected = await selectionCardRound(vale4Msg,game,caller,target,callerOb,targetOb, collectorCaller, collectorTarget);
 
                 cardCaller = cardSelected.cardC;
@@ -991,9 +1014,12 @@ async function playRound(lastMsg, game, caller, target,callerOb,targetOb, collec
                 lastMsgBis = cardSelected.lastMsg;
                 lastInteractionBis = cardSelected.lastInteraction;
             }else if(vale4Interaction.values[0]=="rechazo"){
+                game.playValeCuatro(false);
+                rechazoTruco = true;
                 //termina ronda
             }
         }else if(retrucoInteraction.values[0] == "acepto"){
+            game.playRetruco(true);
             let cardSelected = await selectionCardRound(retrucoMsg, game,caller,target,callerOb,targetOb, collectorCaller, collectorTarget);
             
             cardCaller = cardSelected.cardC;
@@ -1005,6 +1031,8 @@ async function playRound(lastMsg, game, caller, target,callerOb,targetOb, collec
             lastMsgBis = cardSelected.lastMsg;
             lastInteractionBis = cardSelected.lastInteraction;
         }else if(retrucoInteraction.values[0] == "rechazo"){
+            game.playRetruco(false);
+            rechazoTruco = true;
             //termina ronda
         }
     }else if(roundInteraction.values[0]== "vale cuatro"){
@@ -1024,6 +1052,7 @@ async function playRound(lastMsg, game, caller, target,callerOb,targetOb, collec
             embeds:[]
         })
         if(vale4Interaction.values[0]== "acepto"){
+            game.playValeCuatro(true);
             let cardSelected = await selectionCardRound(vale4Msg,game,caller,target,callerOb,targetOb, collectorCaller, collectorTarget);
             
             cardCaller = cardSelected.cardC;
@@ -1035,6 +1064,8 @@ async function playRound(lastMsg, game, caller, target,callerOb,targetOb, collec
             lastMsgBis = cardSelected.lastMsg;
             lastInteractionBis = cardSelected.lastInteraction;
         }else if(vale4Interaction.values[0]== "rechazo"){
+            game.playValeCuatro(false);
+            rechazoTruco = true;
             //termina juego
         }
     }else if(['0','1','2'].includes(roundInteraction.values[0]) && needToPlayCards){
@@ -1074,6 +1105,8 @@ async function playRound(lastMsg, game, caller, target,callerOb,targetOb, collec
             })
     
             if(trucoInteraction.values[0]=="retruco"){
+                game.playTruco(true);
+
                 let retrucoRow = new ActionRowBuilder()
                 .addComponents(retrucoSelectResponse);
     
@@ -1091,6 +1124,8 @@ async function playRound(lastMsg, game, caller, target,callerOb,targetOb, collec
                 })
     
                 if(retrucoInteraction.values[0]=="vale cuatro"){
+                    game.playRetruco(true);
+
                     let vale4row = new ActionRowBuilder()
                     .addComponents(valeCuatroSelectResponse);
     
@@ -1108,6 +1143,8 @@ async function playRound(lastMsg, game, caller, target,callerOb,targetOb, collec
                     })
     
                     if(vale4Interaction.values[0]== "acepto"){
+                        game.playValeCuatro(true);
+
                         let rowCardSelection = new ActionRowBuilder()
                         .addComponents(cardsTargetOptions);
 
@@ -1134,9 +1171,13 @@ async function playRound(lastMsg, game, caller, target,callerOb,targetOb, collec
                         vale4 = false;
                         needToPlayCards = false;
                     }else if(vale4Interaction.values[0]== "rechazo"){
+                        game.playValeCuatro(false);
+                        rechazoTruco = true;
                         //termina juego
                     }
                 }else if(retrucoInteraction.values[0] == "acepto"){
+                    game.playRetruco(true);
+
                     let rowCardSelection = new ActionRowBuilder()
                     .addComponents(cardsTargetOptions);
 
@@ -1163,9 +1204,13 @@ async function playRound(lastMsg, game, caller, target,callerOb,targetOb, collec
                     vale4 = true;
                     needToPlayCards = false;
                 }else if(retrucoInteraction.values[0]== "rechazo"){
+                    game.playRetruco(false);
+                    rechazoTruco = true;
                     //termina juego
                 } 
             }else if(trucoInteraction.values[0] == "acepto"){
+                game.playTruco(true);
+
                 let rowCardSelection = new ActionRowBuilder()
                 .addComponents(cardsTargetOptions);
 
@@ -1192,6 +1237,8 @@ async function playRound(lastMsg, game, caller, target,callerOb,targetOb, collec
                 vale4 = false;
                 needToPlayCards = false;
             }else if(trucoInteraction.values[0] == "rechazo"){
+                game.playTruco(false);
+                rechazoTruco = true;
                 //termina juego
             }
         }else if(roundTargetInteraction.values[0] == "retruco"){ 
@@ -1212,6 +1259,7 @@ async function playRound(lastMsg, game, caller, target,callerOb,targetOb, collec
             })
     
             if(retrucoInteraction.values[0] == "vale cuatro"){
+                game.playRetruco(true);
                 let vale4row = new ActionRowBuilder()
                 .addComponents(valeCuatroSelectResponse);
     
@@ -1229,6 +1277,7 @@ async function playRound(lastMsg, game, caller, target,callerOb,targetOb, collec
                 });
     
                 if(vale4Interaction.values[0]== "acepto"){
+                    game.playValeCuatro(true);
                     let rowCardSelection = new ActionRowBuilder()
                     .addComponents(cardsTargetOptions);
 
@@ -1255,9 +1304,12 @@ async function playRound(lastMsg, game, caller, target,callerOb,targetOb, collec
                     vale4 = false;
                     needToPlayCards=false;
                 }else if(vale4Interaction.values[0]=="rechazo"){
+                    game.playValeCuatro(false);
+                    rechazoTruco = true;
                     //termina ronda
                 }
             }else if(retrucoInteraction.values[0] == "acepto"){
+                game.playRetruco(true);
                 let rowCardSelection = new ActionRowBuilder()
                 .addComponents(cardsTargetOptions);
 
@@ -1284,6 +1336,8 @@ async function playRound(lastMsg, game, caller, target,callerOb,targetOb, collec
                 vale4 = true;
                 needToPlayCards=false;
             }else if(retrucoInteraction.values[0] == "rechazo"){
+                game.playRetruco(false);
+                rechazoTruco=true;
                 //termina ronda
             }
         }else if(roundTargetInteraction.values[0]== "vale cuatro"){
@@ -1303,6 +1357,7 @@ async function playRound(lastMsg, game, caller, target,callerOb,targetOb, collec
                 embeds:[]
             })
             if(vale4Interaction.values[0]== "acepto"){
+                game.playValeCuatro(true);
                 let rowCardSelection = new ActionRowBuilder()
                 .addComponents(cardsTargetOptions);
 
@@ -1329,6 +1384,8 @@ async function playRound(lastMsg, game, caller, target,callerOb,targetOb, collec
                 vale4 = false;
                 needToPlayCards=false;
             }else if(vale4Interaction.values[0]== "rechazo"){
+                game.playValeCuatro(false);
+                rechazoTruco = true;
                 //termina juego
             }
         }else if(['0','1','2'].includes(roundTargetInteraction.values[0]) && needToPlayCards){
