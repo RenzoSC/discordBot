@@ -301,6 +301,14 @@ class Table{
         return this.round;
     }
     
+    get getPointsEnvido(){
+        return this.pointsEnvido;
+    }
+
+    get getPointsRound(){
+        return this.pointsRoundIG;
+    }
+
     get getUser(){
         return this.user;
     }
@@ -1642,6 +1650,17 @@ module.exports = {
 
                 if(jugarEnvido){
                     const round = await roundEnvido(userCardResp, userCardRespMsg, game,user,rival, collectorUserFilter, collectorRivalFilter);
+
+                    let pointsRival = rivalOb.getCardPoints;
+                    let pointsUser = userOb.getCardPoints;
+                    let pointsInGame = game.getPointsEnvido;
+                    if(pointsRival > pointsUser){
+                        rivalOb.addPoints(pointsInGame);
+                    }else if(pointsUser > pointsRival){
+                        userOb.addPoints(pointsInGame);
+                    }else{
+                        userOb.addPoints(pointsInGame);
+                    }
                     lastMsgFirstRound = round.lastMsg;
                 }
                 
@@ -1651,7 +1670,16 @@ module.exports = {
             }
             if(jugarEnvido){
                 const round = await roundEnvido(round1RivalInteraction, round1response, game, user,rival, collectorUserFilter, collectorRivalFilter);   
-                //primer jugador selecciona algun envido el otro debe contestar y ahora tocaria la parte de selección de cartas...
+                let pointsRival = rivalOb.getCardPoints;
+                let pointsUser = userOb.getCardPoints;
+                let pointsInGame = game.getPointsEnvido;
+                if(pointsRival > pointsUser){
+                    rivalOb.addPoints(pointsInGame);
+                }else if(pointsUser > pointsRival){
+                    userOb.addPoints(pointsInGame);
+                }else{
+                    userOb.addPoints(pointsInGame);
+                }
                 lastMsgFirstRound = round.lastMsg;
             }
             if(!firstRoundDone){
@@ -1688,21 +1716,31 @@ module.exports = {
 
                 if(track[0] == null && track[1] == null && track[2] == null){
                     game.winHand(rivalOb);
+                    let pointsInGame = game.getPointsRound;
+                    rivalOb.addPoints(pointsInGame);
                 }else{
                     game.winHand(track[2]);
+                    let pointsInGame = game.getPointsRound;
+                    track[2].addPoints(pointsInGame);
                 }
             }
             if(track[1] == null){
                 let winner = game.getFirstStageWon;
                 game.winHand(winner);
+                let pointsInGame = game.getPointsRound;
+                winner.addPoints(pointsInGame);
             }
 
             if(track[0] == null){
                 let winner = secondRound.winner;
                 game.winHand(winner);
+                let pointsInGame = game.getPointsRound;
+                winner.addPoints(pointsInGame);
             }
             if(track[0] != null && (track[1] == track[0])){
                 game.winHand(track[0]);
+                let pointsInGame = game.getPointsRound;
+                track[0].addPoints(pointsInGame);
             }
             //mensaje de quien ganó la ronda xd
         }catch(e){
