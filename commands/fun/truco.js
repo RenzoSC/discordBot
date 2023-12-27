@@ -359,7 +359,8 @@ async function compRoundEnvido(optComponent, prevInteraction,prevMsg,userTarget,
 
     return [responseEnv, responseMsg];
 }
-async function roundEnvido(round1RivalInteraction, round1response, game,user,rival, collectorUserFilter, collectorRivalFilter){
+let salir = {"ob":null,"us":null,"val":false};
+async function roundEnvido(round1RivalInteraction, round1response, game,user,rival, userOb,rivalOb, collectorUserFilter, collectorRivalFilter){
     const envSelectResponse= new StringSelectMenuBuilder()
         .setCustomId('envResp')
         .setPlaceholder('Select your response!')
@@ -443,11 +444,11 @@ async function roundEnvido(round1RivalInteraction, round1response, game,user,riv
 
         if(interR1[0].values[0] == 'acepto' ){
             game.playEnvido(true);
-            return {'lastInteraction':interR1[0],'lastMsg':interR1[1], 'rechazo':false};
+            return {'lastInteraction':interR1[0],'lastMsg':interR1[1], 'rechazo':{"ob":userOb,"us":user,"val":false}};
         }else if(interR1[0].values[0] == 'rechazo'){
             game.playEnvido(false);
             lastMsgInHand = interR1[1];
-            return {'lastInteraction':interR1[0],'lastMsg':interR1[1], 'rechazo':true};
+            return {'lastInteraction':interR1[0],'lastMsg':interR1[1], 'rechazo':{"ob":userOb,"us":user,"val":true}};
         }else if(interR1[0].values[0] == 'envido'){   //envido envido
             game.playEnvido(true);
             lastMsgInHand = interR1[1];
@@ -455,67 +456,67 @@ async function roundEnvido(round1RivalInteraction, round1response, game,user,riv
 
             if(interR2[0].values[0] == 'acepto'){
                 game.playEnvido(true);
-                return {'lastInteraction':interR2[0],'lastMsg':interR2[1], 'rechazo':false};
+                return {'lastInteraction':interR2[0],'lastMsg':interR2[1], 'rechazo':{"ob":rival,"us":rival,"val":false}};
             }else if(interR2[0].values[0] == 'rechazo'){
                 lastMsgInHand = interR2[1];
                 game.playEnvido(false);
-                return {'lastInteraction':interR2[0],'lastMsg':interR2[1],'rechazo':true};
+                return {'lastInteraction':interR2[0],'lastMsg':interR2[1],'rechazo':{"ob":userOb,"us":user,"val":true}};
             }else if(interR2[0].values[0] == 'real envido'){   //envido envido real envido
                 game.playEnvido(true);
                 const interR3 = await compRoundEnvido(envSelectResponse3,interR2[0],interR2[1],user,collectorUserFilter);
 
                 if(interR3[0].values[0] == 'acepto'){
                     game.playRenvido(true);
-                    return {'lastInteraction':interR3[0],'lastMsg':interR3[1], 'rechazo':false};
+                    return {'lastInteraction':interR3[0],'lastMsg':interR3[1], 'rechazo':{"ob":userOb,"us":user,"val":false}};
                 }else if(interR3[0].values[0] == 'rechazo'){
                     game.playRenvido(false);
                     lastMsgInHand = interR3[1];
-                    return {'lastInteraction':interR3[0],'lastMsg':interR3[1],'rechazo':true};
+                    return {'lastInteraction':interR3[0],'lastMsg':interR3[1],'rechazo':{"ob":userOb,"us":user,"val":true}};
                 }else if(interR3[0].values[0] == 'falta envido'){  //envido envido real envido falta envido
                     game.playRenvido(true);
                     const interR4 = await compRoundEnvido(envSelectResponse4, interR3[0], interR3[1], rival, collectorRivalFilter);
 
                     if(interR4[0].values[0] == 'acepto'){
                         game.playFenvido(true);
-                        return {'lastInteraction':interR4[0],'lastMsg':interR4[1], 'rechazo':false};
+                        return {'lastInteraction':interR4[0],'lastMsg':interR4[1], 'rechazo':{"ob":rivalOb,"us":rival,"val":false}};
                     }else if(interR4[0].values[0]=='rechazo'){
                         game.playFenvido(false);
                         lastMsgInHand = interR4[1];
-                        return {'lastInteraction':interR4[0],'lastMsg':interR4[1],'rechazo':true};
+                        return {'lastInteraction':interR4[0],'lastMsg':interR4[1],'rechazo':{"ob":rivalOb,"us":rival,"val":true}};
                     }else if(interR4[0].values[0]=="salir"){
-                        salir = true;
+                        salir = {"ob":rivalOb,"us":rival,"val":true};
                         lastMsgInHand = interR4[1];
-                        return {'lastInteraction':interR4[0],'lastMsg':interR4[1],'rechazo':true};
+                        return {'lastInteraction':interR4[0],'lastMsg':interR4[1],'rechazo':{"ob":rivalOb,"us":rival,"val":true}};
                     }
             
                 }else if(interR3[0].values[0]=="salir"){
-                    salir = true;
+                    salir = {"ob":userOb,"us":user,"val":true};
                     lastMsgInHand = interR3[1];
-                    return {'lastInteraction':interR3[0],'lastMsg':interR3[1],'rechazo':true};
+                    return {'lastInteraction':interR3[0],'lastMsg':interR3[1],'rechazo':{"ob":userOb,"us":user,"val":true}};
                 }
         
 
             }else if(interR2[0].values[0] == 'falta envido'){   //envido envido falta envido
                 game.playEnvido(true);
 
-                const interR3 = await compRoundEnvido(envSelectResponse4, interR2[0], interR2[1],rival, collectorRivalFilter);
+                const interR3 = await compRoundEnvido(envSelectResponse4, interR2[0], interR2[1],user, collectorRivalFilter);
 
                 if(interR3[0].values[0] == 'acepto'){
                     game.playFenvido(true);
-                    return {'lastInteraction':interR3[0],'lastMsg':interR3[1], 'rechazo':false};
+                    return {'lastInteraction':interR3[0],'lastMsg':interR3[1], 'rechazo':{"ob":userOb,"us":user,"val":false}};
                 }else if(interR3[0].values[0] == 'rechazo'){
                     game.playFenvido(false);
                     lastMsgInHand = interR3[1];
-                    return {'lastInteraction':interR3[0],'lastMsg':interR3[1],'rechazo':true};
+                    return {'lastInteraction':interR3[0],'lastMsg':interR3[1],'rechazo':{"ob":userOb,"us":user,"val":true}};
                 }else if(interR3[0].values[0]=="salir"){
-                    salir = true;
+                    salir = {"ob":userOb,"us":user,"val":true};
                     lastMsgInHand = interR3[1];
-                    return {'lastInteraction':interR3[0],'lastMsg':interR3[1],'rechazo':true};
+                    return {'lastInteraction':interR3[0],'lastMsg':interR3[1],'rechazo':{"ob":userOb,"us":user,"val":true}};
                 }
             }else if(interR2[0].values[0]=="salir"){
-                salir = true;
+                salir = {"ob":rivalOb,"us":rival,"val":true};
                 lastMsgInHand = interR2[1];
-                return {'lastInteraction':interR2[0],'lastMsg':interR2[1],'rechazo':true};
+                return {'lastInteraction':interR2[0],'lastMsg':interR2[1],'rechazo':{"ob":rivalOb,"us":rival,"val":true}};
             }
     
         }else if(interR1[0].values[0] == 'real envido'){  //envido real envido
@@ -525,11 +526,11 @@ async function roundEnvido(round1RivalInteraction, round1response, game,user,riv
 
             if(interR2[0].values[0] == 'acepto'){
                 game.playRenvido(true);
-                return {'lastInteraction':interR2[0],'lastMsg':interR2[1], 'rechazo':false};
+                return {'lastInteraction':interR2[0],'lastMsg':interR2[1], 'rechazo':{"ob":rivalOb,"us":rival,"val":false}};
             }else if (interR2[0].values[0] == 'rechazo'){
                 game.playRenvido(false);
                 lastMsgInHand = interR2[1];
-                return {'lastInteraction':interR2[0],'lastMsg':interR2[1],'rechazo':true};
+                return {'lastInteraction':interR2[0],'lastMsg':interR2[1],'rechazo':{"ob":rivalOb,"us":rival,"val":true}};
             }else if(interR2[0].values[0] == 'falta envido'){ //envido real envido falta envido
                 game.playRenvido(true);
 
@@ -537,21 +538,21 @@ async function roundEnvido(round1RivalInteraction, round1response, game,user,riv
 
                 if(interR3[0].values[0] == 'acepto'){
                     game.playFenvido(true);
-                    return {'lastInteraction':interR3[0],'lastMsg':interR3[1], 'rechazo':false};
+                    return {'lastInteraction':interR3[0],'lastMsg':interR3[1], 'rechazo':{"ob":userOb,"us":user,"val":false}};
                 }else if(interR3[0].values[0] == ' rechazo'){
                     game.playFenvido(false);
                     lastMsgInHand = interR3[1];
-                    return {'lastInteraction':interR3[0],'lastMsg':interR3[1],'rechazo':true};
+                    return {'lastInteraction':interR3[0],'lastMsg':interR3[1],'rechazo':{"ob":userOb,"us":user,"val":true}};
                 }else if(interR3[0].values[0]=="salir"){
-                    salir = true;
+                    salir = {"ob":userOb,"us":user,"val":true};
                     lastMsgInHand = interR3[1];
-                    return {'lastInteraction':interR3[0],'lastMsg':interR3[1],'rechazo':true};
+                    return {'lastInteraction':interR3[0],'lastMsg':interR3[1],'rechazo':{"ob":userOb,"us":user,"val":true}};
                 }
         
             }else if(interR2[0].values[0]=="salir"){
-                salir = true;
+                salir = {"ob":rivalOb,"us":rival,"val":true};
                 lastMsgInHand = interR2[1];
-                return {'lastInteraction':interR2[0],'lastMsg':interR2[1],'rechazo':true};
+                return {'lastInteraction':interR2[0],'lastMsg':interR2[1],'rechazo':{"ob":rivalOb,"us":rival,"val":true}};
             }
     
         }else if(interR1[0].values[0] == 'falta envido'){  //envido falta envido
@@ -561,75 +562,75 @@ async function roundEnvido(round1RivalInteraction, round1response, game,user,riv
 
             if(interR2[0].values[0] == 'acepto'){
                 game.playFenvido(true);
-                return {'lastInteraction':interR2[0],'lastMsg':interR2[1], 'rechazo':false};
+                return {'lastInteraction':interR2[0],'lastMsg':interR2[1], 'rechazo':{"ob":rivalOb,"us":rival,"val":false}};
             }else if(interR2[0].values[0] == 'rechazo'){
                 game.playFenvido(false);
                 lastMsgInHand = interR2[1];
-                return {'lastInteraction':interR2[0],'lastMsg':interR2[1],'rechazo':true};
+                return {'lastInteraction':interR2[0],'lastMsg':interR2[1],'rechazo':{"ob":rivalOb,"us":rival,"val":true}};
             }else if(interR2[0].values[0]=="salir"){
-                salir = true;
+                salir = {"ob":rivalOb,"us":rival,"val":true};
                 lastMsgInHand = interR2[1];
-                return {'lastInteraction':interR2[0],'lastMsg':interR2[1],'rechazo':true};
+                return {'lastInteraction':interR2[0],'lastMsg':interR2[1],'rechazo':{"ob":rivalOb,"us":rival,"val":true}};
             }
     
         }else if(interR1[0].values[0]=="salir"){
-            salir = true;
+            salir = {"ob":userOb,"us":user,"val":true};
             lastMsgInHand = interR1[1];
-            return {'lastInteraction':interR1[0],'lastMsg':interR1[1],'rechazo':true};
+            return {'lastInteraction':interR1[0],'lastMsg':interR1[1],'rechazo':{"ob":userOb,"us":user,"val":true}};
         }
 
     }else if(round1RivalInteraction.values[0] == 'real envido'){ // first round real envido
             
-        const interR1 = await compRoundEnvido(envSelectResponse3, round1RivalInteraction, round1response, rival, collectorRivalFilter);
+        const interR1 = await compRoundEnvido(envSelectResponse3, round1RivalInteraction, round1response, user, collectorRivalFilter);
 
         if(interR1[0].values[0] == 'acepto'){
             game.playRenvido(true);
-            return {'lastInteraction':interR1[0],'lastMsg':interR1[1], 'rechazo':false};
+            return {'lastInteraction':interR1[0],'lastMsg':interR1[1], 'rechazo':{"ob":userOb,"us":user,"val":false}};
         }else if(interR1[0].values[0] =='rechazo'){
             game.playRenvido(false);
             lastMsgInHand = interR1[1];
-            return {'lastInteraction':interR1[0],'lastMsg':interR1[1],'rechazo':true};
+            return {'lastInteraction':interR1[0],'lastMsg':interR1[1],'rechazo':{"ob":userOb,"us":user,"val":true}};
         }else if(interR1[0].values[0] == 'falta envido'){  //real envido falta envido
             game.playRenvido(true);
 
-            const interR2 = await compRoundEnvido(envSelectResponse4, interR1[0], interR1[1], user, collectorUserFilter);
+            const interR2 = await compRoundEnvido(envSelectResponse4, interR1[0], interR1[1], rival, collectorUserFilter);
             if(interR2[0].values[0] == 'acepto'){
                 game.playFenvido(true);
-                return {'lastInteraction':interR2[0],'lastMsg':interR2[1], 'rechazo':false};
+                return {'lastInteraction':interR2[0],'lastMsg':interR2[1], 'rechazo':{"ob":rivalOb,"us":rival,"val":false}};
             }else if(interR2[0].values[0] == 'rechazo'){
                 game.playFenvido(false);
                 lastMsgInHand = interR2[1];
-                return {'lastInteraction':interR2[0],'lastMsg':interR2[1],'rechazo':true};
+                return {'lastInteraction':interR2[0],'lastMsg':interR2[1],'rechazo':{"ob":rivalOb,"us":rival,"val":true}};
             }else if(interR2[0].values[0]=="salir"){
-                salir = true;
+                salir = {"ob":rivalOb,"us":rival,"val":true};
                 lastMsgInHand = interR2[1];
-                return {'lastInteraction':interR2[0],'lastMsg':interR2[1],'rechazo':true};
+                return {'lastInteraction':interR2[0],'lastMsg':interR2[1],'rechazo':{"ob":rivalOb,"us":rival,"val":true}};
             }
     
         }else if(interR1[0].values[0]=="salir"){
-            salir = true;
+            salir = {"ob":userOb,"us":user,"val":true};
             lastMsgInHand = interR1[1];
-            return {'lastInteraction':interR1[0],'lastMsg':interR1[1],'rechazo':true};
+            return {'lastInteraction':interR1[0],'lastMsg':interR1[1],'rechazo':{"ob":userOb,"us":user,"val":true}};
         }
 
     }else if(round1RivalInteraction.values[0] == 'falta envido'){// first round falta envido
-        const interR1 = await compRoundEnvido(envSelectResponse4, round1RivalInteraction, round1response, rival, collectorRivalFilter);
+        const interR1 = await compRoundEnvido(envSelectResponse4, round1RivalInteraction, round1response, user, collectorRivalFilter);
         if(interR1[0].values[0] == 'acepto'){
             game.playRenvido(true);
-            return {'lastInteraction':interR1[0],'lastMsg':interR1[1], 'rechazo':false};
+            return {'lastInteraction':interR1[0],'lastMsg':interR1[1], 'rechazo':{"ob":userOb,"us":user,"val":false}};
         }else if(interR1[0].values[0] =='rechazo'){
             game.playRenvido(false);
             lastMsgInHand = interR1[1];
-            return {'lastInteraction':interR1[0],'lastMsg':interR1[1],'rechazo':true};
+            return {'lastInteraction':interR1[0],'lastMsg':interR1[1],'rechazo':{"ob":userOb,"us":user,"val":true}};
         }else if(interR1[0].values[0]=="salir"){
-            salir = true;
+            salir = {"ob":userOb,"us":user,"val":true};
             lastMsgInHand = interR1[1];
-            return {'lastInteraction':interR1[0],'lastMsg':interR1[1],'rechazo':true};
+            return {'lastInteraction':interR1[0],'lastMsg':interR1[1],'rechazo':{"ob":userOb,"us":user,"val":true}};
         }
     }else if(round1RivalInteraction.values[0]=='salir'){
-        salir = true;
+        salir = {"ob":userOb,"us":user,"val":true};
         lastMsgInHand = round1response;
-        return {'lastInteraction':round1RivalInteraction,'lastMsg':round1response,'rechazo':true};
+        return {'lastInteraction':round1RivalInteraction,'lastMsg':round1response,'rechazo':{"ob":userOb,"us":user,"val":true}};
     }
 }
 
@@ -638,7 +639,7 @@ let jugarEnvido = true;
 let truco = true;
 let retruco = false;
 let vale4 = false;
-let salir = false;
+
 async function trucoFirstRound(selectResponse, responseMsg, responseInteraction, game, user, rival, userOb,rivalOb, collectorUserFilter, collectorRivalFilter, retrucoSelectResponse, vale4SelectResponse){
     let trucoRow = new ActionRowBuilder()
     .addComponents(selectResponse);
@@ -661,7 +662,7 @@ async function trucoFirstRound(selectResponse, responseMsg, responseInteraction,
         let pointsRival = rivalOb.getCardPoints;
         let pointsUser = userOb.getCardPoints;
         pointsInGame = game.getPointsEnvido;
-        if(!round.rechazo){
+        if(!round.rechazo.val){
             if(pointsRival > pointsUser){
                 rivalOb.addPoints(pointsInGame);
                 lastMsg = await round.lastMsg.reply({
@@ -678,7 +679,6 @@ async function trucoFirstRound(selectResponse, responseMsg, responseInteraction,
                 })
             }else{
                 userOb.addPoints(pointsInGame);
-                userOb.addPoints(pointsInGame);
                 lastMsg = await round.lastMsg.reply({
                     content:`${user} se lleva ${pointsInGame} puntos de envido!`,
                     components:[],
@@ -686,7 +686,13 @@ async function trucoFirstRound(selectResponse, responseMsg, responseInteraction,
                 })
             }
         }else{
-            lastMsg = round.lastMsg;
+            let usEnv = round.rechazo.ob;
+            usEnv.addPoints(pointsInGame);
+            lastMsg = await round.lastMsg.reply({
+                content:`${round.rechazo.us} se lleva ${pointsInGame} puntos de envido!`,
+                components:[],
+                embeds:[]
+            })
         }
     }else if(respTruco.values[0] == "acepto"){
         jugarEnvido = false;
@@ -760,15 +766,15 @@ async function trucoFirstRound(selectResponse, responseMsg, responseInteraction,
                 lastMsg = respvaleTrucoMsg;
                 lastMsgInHand = respvaleTrucoMsg;
             }else if(respValetruco.values[0]=="salir"){
-                salir = true;
+                salir = {"ob":userOb,"us":user,"val":true};
                 lastMsgInHand = respvaleTrucoMsg;
             }
         }else if(respRetruco.values[0]=="salir"){
-            salir = true;
+            salir = {"ob":rivalOb,"us":rival,"val":true};
             lastMsgInHand = respreTrucoMsg;
         } 
     }else if(respTruco.values[0]== "salir"){
-        salir = true;
+        salir = {"ob":userOb,"us":user,"val":true};
         lastMsgInHand = respTrucoMsg;
     }       
     return lastMsg; 
@@ -1059,7 +1065,7 @@ async function playRound(lastMsg, game, caller, target,callerOb,targetOb, collec
                     lastMsgInHand = vale4Msg;
                     //termina juego
                 }else if(vale4Interaction.values[0]=="salir"){
-                    salir = true;
+                    salir = {"ob":targetOb,"us":target,"val":true};
                     lastMsgInHand = vale4Msg;
                     return {"winnerOb":callerOb,"loserOb":targetOb,"winner":caller,"loser":target,"draw":false,"lastInteraction":vale4Interaction,"lastMsg":vale4Msg, "winnerCol":collectorCaller, "loserCol":collectorTarget}; 
                 }
@@ -1082,7 +1088,7 @@ async function playRound(lastMsg, game, caller, target,callerOb,targetOb, collec
                 lastMsgInHand= retrucoMsg;
                 //termina juego
             }else if(retrucoInteraction.values[0]=="salir"){
-                salir=true;
+                salir={"ob":callerOb,"us":caller,"val":true};
                 lastMsgInHand = retrucoMsg;
                 return {"winnerOb":targetOb,"loserOb":callerOb,"winner":target,"loser":caller,"draw":false,"lastInteraction":retrucoInteraction,"lastMsg":retrucoMsg, "winnerCol":collectorTarget, "loserCol":collectorCaller}; 
             } 
@@ -1104,7 +1110,7 @@ async function playRound(lastMsg, game, caller, target,callerOb,targetOb, collec
             lastMsgInHand = trucoMsg;
             //termina juego
         }else if(trucoInteraction.values[0]== "salir"){
-            salir = true;
+            salir = {"ob":targetOb,"us":target,"val":true};
             lastMsgInHand = trucoMsg;
             return {"winnerOb":callerOb,"loserOb":targetOb,"winner":caller,"loser":target,"draw":false,"lastInteraction":trucoInteraction,"lastMsg":trucoMsg, "winnerCol":collectorCaller, "loserCol":collectorTarget}; 
         }
@@ -1161,7 +1167,7 @@ async function playRound(lastMsg, game, caller, target,callerOb,targetOb, collec
                 lastMsgInHand = vale4Msg;
                 //termina ronda
             }else if(vale4Interaction.values[0]=="salir"){
-                salir = true;
+                salir = {"ob":callerOb,"us":caller,"val":true};
                 lastMsgInHand = vale4Msg;
                 return {"winnerOb":targetOb,"loserOb":callerOb,"winner":target,"loser":caller,"draw":false,"lastInteraction":vale4Interaction,"lastMsg":vale4Msg, "winnerCol":collectorTarget, "loserCol":collectorCaller}; 
             }
@@ -1183,7 +1189,7 @@ async function playRound(lastMsg, game, caller, target,callerOb,targetOb, collec
             lastMsgInHand = retrucoMsg;
             //termina ronda
         }else if(retrucoInteraction.values[0]=="salir"){
-            salir = true;
+            salir = {"ob":targetOb,"us":target,"val":true};
             lastMsgInHand = retrucoMsg;
             return {"winnerOb":caller,"loserOb":targetOb,"winner":caller,"loser":target,"draw":false,"lastInteraction":retrucoInteraction,"lastMsg":retrucoMsg, "winnerCol":collectorCaller, "loserCol":collectorTarget}; 
         }
@@ -1221,7 +1227,7 @@ async function playRound(lastMsg, game, caller, target,callerOb,targetOb, collec
             lastMsgInHand = vale4Msg;
             //termina juego
         }else if(vale4Interaction.values[0]=="salir"){
-            salir=true;
+            salir={"ob":targetOb,"us":target,"val":true};
             lastMsgInHand = vale4Msg;
             return {"winnerOb":callerOb,"loserOb":targetOb,"winner":caller,"loser":target,"draw":false,"lastInteraction":vale4Interaction,"lastMsg":vale4Msg, "winnerCol":collectorCaller, "loserCol":collectorTarget}; 
         }
@@ -1333,7 +1339,7 @@ async function playRound(lastMsg, game, caller, target,callerOb,targetOb, collec
                         lastMsgInHand = vale4Msg;
                         //termina juego
                     }else if(vale4Interaction.values[0]=="salir"){
-                        salir = true;
+                        salir = {"ob":targetOb,"us":target,"val":true};
                         lastMsgInHand = vale4Msg;
                         return {"winnerOb":callerOb,"loserOb":targetOb,"winner":caller,"loser":target,"draw":false,"lastInteraction":vale4Interaction,"lastMsg":vale4Msg, "winnerCol":collectorCaller, "loserCol":collectorTarget}; 
                     }
@@ -1371,7 +1377,7 @@ async function playRound(lastMsg, game, caller, target,callerOb,targetOb, collec
                     lastMsgInHand = retrucoMsg;
                     //termina juego
                 }else if(retrucoInteraction.values[0]=="salir"){
-                    salir = true;
+                    salir = {"ob":targetOb,"us":target,"val":true};
                     lastMsgInHand = retrucoMsg;
                     return {"winnerOb":callerOb,"loserOb":targetOb,"winner":caller,"loser":target,"draw":false,"lastInteraction":retrucoInteraction,"lastMsg":retrucoMsg, "winnerCol":collectorCaller, "loserCol":collectorTarget}; 
                 }
@@ -1409,7 +1415,7 @@ async function playRound(lastMsg, game, caller, target,callerOb,targetOb, collec
                 lastMsgInHand = trucoMsg;
                 //termina juego
             }else if(trucoInteraction.values[0]=="salir"){
-                salir = true;
+                salir = {"ob":callerOb,"us":caller,"val":true};
                 lastMsgInHand = trucoMsg;
                 return {"winnerOb":targetOb,"loserOb":callerOb,"winner":target,"loser":caller,"draw":false,"lastInteraction":trucoInteraction,"lastMsg":trucoMsg, "winnerCol":collectorTarget, "loserCol":collectorCaller}; 
             }
@@ -1481,7 +1487,7 @@ async function playRound(lastMsg, game, caller, target,callerOb,targetOb, collec
                     lastMsgInHand = vale4Msg;
                     //termina ronda
                 }else if(vale4Interaction.values[0]=="salir"){
-                    salir = true;
+                    salir = {"ob":targetOb,"us":target,"val":true};
                     lastMsgInHand = vale4Msg;
                     return {"winnerOb":callerOb,"loserOb":targetOb,"winner":caller,"loser":target,"draw":false,"lastInteraction":vale4Interaction,"lastMsg":vale4Msg, "winnerCol":collectorCaller, "loserCol":collectorTarget}; 
                 }
@@ -1518,7 +1524,7 @@ async function playRound(lastMsg, game, caller, target,callerOb,targetOb, collec
                 lastMsgInHand = retrucoMsg;
                 //termina ronda
             }else if(retrucoInteraction.values[0]=="salir"){
-                salir = true;
+                salir = {"ob":callerOb,"us":caller,"val":true};
                 lastMsgInHand = retrucoMsg;
                 return {"winnerOb":targetOb,"loserOb":callerOb,"winner":target,"loser":caller,"draw":false,"lastInteraction":retrucoInteraction,"lastMsg":retrucoMsg, "winnerCol":collectorTarget, "loserCol":collectorCaller}; 
             }
@@ -1571,7 +1577,7 @@ async function playRound(lastMsg, game, caller, target,callerOb,targetOb, collec
                 lastMsgInHand = vale4Msg;
                 //termina juego
             }else if(vale4Interaction.values[0]=="salir"){
-                salir = true;
+                salir = {"ob":callerOb,"us":caller,"val":true};
                 lastMsgInHand = vale4Msg;
                 return {"winnerOb":targetOb,"loserOb":callerOb,"winner":target,"loser":caller,"draw":false,"lastInteraction":vale4Interaction,"lastMsg":vale4Msg, "winnerCol":collectorTarget, "loserCol":collectorCaller}; 
             }
@@ -1582,17 +1588,17 @@ async function playRound(lastMsg, game, caller, target,callerOb,targetOb, collec
             lastMsgBis=await game.showTable(roundTargetMsg);
             lastInteractionBis = roundTargetInteraction;
         }else if(roundTargetInteraction.values[0]=="salir"){
-            salir = true;
+            salir = {"ob":targetOb,"us":target,"val":true};
             lastMsgInHand = roundTargetMsg;
             return {"winnerOb":callerOb,"loserOb":targetOb,"winner":caller,"loser":target,"draw":false,"lastInteraction":roundTargetInteraction,"lastMsg":roundTargetMsg, "winnerCol":collectorCaller, "loserCol":collectorTarget}; 
         }
     }else if(roundInteraction.values[0]=="salir"){
-        salir = true;
+        salir = {"ob":callerOb,"us":caller,"val":true};
         lastMsgInHand = roundMsg;
         return {"winnerOb":targetOb,"loserOb":callerOb,"winner":target,"loser":caller,"draw":false,"lastInteraction":roundInteraction,"lastMsg":roundMsg, "winnerCol":collectorTarget, "loserCol":collectorCaller}; 
     }
 
-    if(!salir){
+    if(!salir.val){
         let pointsCaller = cardCaller.getTrucoValue;
         let pointsTarget = cardTarget.getTrucoValue;
         
@@ -1889,7 +1895,7 @@ module.exports = {
                             game.nextRound();
                         }
                     }else if(selectFRInteraction.values[0] == "salir"){
-                        salir = true;
+                        salir = {"ob":userOb,"us":user,"val":true};
                         lastMsgInHand = selectFRMsg;
                     }
                 }else if(userCardResp.values[0] == '0' || userCardResp.values[0] == '1' || userCardResp.values[0] == '2'){
@@ -1916,7 +1922,7 @@ module.exports = {
                     }
                     lastMsgInHand = firstRound.lastMsg;
                 }else if(userCardResp.values[0]== "salir"){
-                    salir = true;
+                    salir = {"ob":userOb,"us":user,"val":true};
                     lastMsgInHand = userCardRespMsg;
                 }else if(["envido", "real envido", "falta envido"].includes(userCardResp.values[0])){
                     const round = await roundEnvido(userCardResp, userCardRespMsg,game,rival,user,collectorRivalFilter, collectorUserFilter);
@@ -1925,7 +1931,7 @@ module.exports = {
                     pointsInGame = game.getPointsEnvido;
                     let lastmsg;   //si lo cancela se lleva el otroxd
                     let elegirCarta = false;
-                    if(!round.rechazo){
+                    if(!round.rechazo.val){
                         if(pointsRival > pointsUser){
                             rivalOb.addPoints(pointsInGame);
                             lastmsg =await round.lastMsg.reply({
@@ -1949,7 +1955,13 @@ module.exports = {
                             })
                         }
                     }else{
-                        lastmsg = round.lastMsg;
+                        let usEnv = round.rechazo.ob;
+                        usEnv.addPoints(pointsInGame);
+                        lastmsg = await round.lastMsg.reply({
+                            content:`${round.rechazo.us} se lleva ${pointsInGame} puntos de envido!`,
+                            components:[],
+                            embeds:[]
+                        })
                     }
                     jugarEnvido = false;
                     let select = new StringSelectMenuBuilder()
@@ -2124,7 +2136,7 @@ module.exports = {
                         lastMsgInHand = firstRound.lastMsg;
                         jugarEnvido = false;
                     }else if(selectUserInteraction.values[0]=="salir"){
-                        salir = true;
+                        salir = {"ob":userOb,"us":user,"val":true};
                         lastMsgInHand = selectUserMsg;
                     }
                     if(elegirCarta && !rechazoTruco){
@@ -2172,55 +2184,18 @@ module.exports = {
                             }
                             lastMsgInHand = firstRound.lastMsg;
                         }else{
-                            salir = true;
+                            salir = {"ob":userOb,"us":user,"val":true};
                             lastMsgInHand = selectCardMsg;
                         }
                         jugarEnvido = false;
                     }
                 }
-
-                if(jugarEnvido && !rechazoTruco){
-                    const round = await roundEnvido(userCardResp, userCardRespMsg, game,user,rival, collectorUserFilter, collectorRivalFilter);
-
-                    let pointsRival = rivalOb.getCardPoints;
-                    let pointsUser = userOb.getCardPoints;
-                    pointsInGame = game.getPointsEnvido;
-                    let lastmsg;
-                    if(!round.rechazo){
-                        if(pointsRival > pointsUser){
-                            rivalOb.addPoints(pointsInGame);
-                            lastmsg =await round.lastMsg.reply({
-                                content:`${rival} se lleva ${pointsInGame} puntos de envido!`,
-                                components:[],
-                                embeds:[]
-                            })
-                        }else if(pointsUser > pointsRival){
-                            userOb.addPoints(pointsInGame);
-                            lastmsg =await round.lastMsg.reply({
-                                content:`${user} se lleva ${pointsInGame} puntos de envido!`,
-                                components:[],
-                                embeds:[]
-                            })
-                        }else{
-                            userOb.addPoints(pointsInGame);
-                            lastmsg =await round.lastMsg.reply({
-                                content:`${user} se lleva ${pointsInGame} puntos de envido!`,
-                                components:[],
-                                embeds:[]
-                            })
-                        }
-                    }else{
-                        lastmsg = round.lastMsg;
-                    }
-                    lastMsgFirstRound = lastmsg;
-                    
-                }
                 
             }else if(round1RivalInteraction.values[0]== "salir"){
-                salir = true
+                salir = {"ob":rivalOb,"us":rival,"val":true}
                 lastMsgInHand = round1response;
             }
-            if(jugarEnvido && !rechazoTruco && !salir){
+            if(jugarEnvido && !rechazoTruco && !salir.val){
                 const round = await roundEnvido(round1RivalInteraction, round1response, game, user,rival, collectorUserFilter, collectorRivalFilter);   
                 let pointsRival = rivalOb.getCardPoints;
                 let pointsUser = userOb.getCardPoints;
@@ -2250,14 +2225,20 @@ module.exports = {
                         })
                     }
                 }else{
-                    lastmsg = round.lastMsg;
+                    let usEnv = round.rechazo.ob;
+                    usEnv.addPoints(pointsInGame);
+                    lastmsg = await round.lastMsg.reply({
+                        content:`${round.rechazo.us} se lleva ${pointsInGame} puntos de envido!`,
+                        components:[],
+                        embeds:[]
+                    })
                 }
                 lastMsgFirstRound = lastmsg;
             }
-            if(!firstRoundDone && !rechazoTruco && !salir){
+            if(!firstRoundDone && !rechazoTruco && !salir.val){
                 firstRound = await playRound(lastMsgFirstRound, game, rival, user, rivalOb, userOb, collectorRivalFilter, collectorUserFilter);
                 lastMsgInHand = firstRound.lastMsg;
-                if(!salir){
+                if(!salir.val){
                     if(firstRound.draw){
                         game.winRound(null);
                         game.nextRound();
@@ -2267,10 +2248,10 @@ module.exports = {
                     }
                 }
             }
-            if(!rechazoTruco && !salir){
+            if(!rechazoTruco && !salir.val){
                 secondRound = await playRound(firstRound.lastMsg, game,firstRound.winner, firstRound.loser, firstRound.winnerOb, firstRound.loserOb, firstRound.winnerCol, firstRound.loserCol);
                 lastMsgInHand= secondRound.lastMsg;
-                if(!salir){
+                if(!salir.val){
                     if(secondRound.draw){
                         game.winRound(null);
                         game.nextRound();
@@ -2282,7 +2263,7 @@ module.exports = {
                     if((track[0] == null && track[1] == null) || (track[0] != null && track[1]!= null) && !rechazoTruco){
                         thirdRound = await playRound(secondRound.lastMsg, game, secondRound.winner, secondRound.loser, secondRound.winnerOb, secondRound.loserOb, secondRound.winnerCol, secondRound.loserCol);
                         lastMsgInHand = thirdRound.lastMsg;
-                        if(!salir){
+                        if(!salir.val){
                             if(thirdRound.draw){
                                 game.winRound(null);
                                 game.nextRound();
@@ -2324,12 +2305,25 @@ module.exports = {
                     }
                 }
             }
-            let winnerHand = game.getHandWinTrack[0] == rivalOb ? rival:user;
-            lastMsgInHand= await lastMsgInHand.reply({
-                content:`La ronda finalizó.\nGanó ${winnerHand}\n+${pointsInGame} puntos!!`,
-                components:[],
-                embeds:[]
-            })
+            if(!salir.val){
+                let winnerHand = game.getHandWinTrack[0] == rivalOb ? rival:user;
+                lastMsgInHand= await lastMsgInHand.reply({
+                    content:`La ronda finalizó.\nGanó ${winnerHand}\n+${pointsInGame} puntos!!`,
+                    components:[],
+                    embeds:[]
+                })
+            }else{
+                let winnerHandOb = salir.us == user?userOb:rivalOb;
+                let winnerHandUs = salir.us == user?user:rival;
+                pointsInGame = game.getPointsRound;
+                winnerHandOb.addPoints(pointsInGame);
+                game.winHand(winnerHandOb);
+                lastMsgInHand= await lastMsgInHand.reply({
+                    content:`La ronda finalizó.\nGanó ${winnerHandUs}\n+${pointsInGame} puntos!!`,
+                    components:[],
+                    embeds:[]
+                })
+            }
         }catch(e){
             console.log(e);
             await interaction.editReply({ content: 'Confirmation not received within 1 minute, cancelling', components: [] });
