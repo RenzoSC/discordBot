@@ -661,28 +661,32 @@ async function trucoFirstRound(selectResponse, responseMsg, responseInteraction,
         let pointsRival = rivalOb.getCardPoints;
         let pointsUser = userOb.getCardPoints;
         pointsInGame = game.getPointsEnvido;
-        if(pointsRival > pointsUser){
-            rivalOb.addPoints(pointsInGame);
-            lastMsg = await round.lastMsg.reply({
-                content:`${rival} se lleva ${pointsInGame} puntos de envido!`,
-                components:[],
-                embeds:[]
-            })
-        }else if(pointsUser > pointsRival){
-            userOb.addPoints(pointsInGame);
-            lastMsg = await round.lastMsg.reply({
-                content:`${user} se lleva ${pointsInGame} puntos de envido!`,
-                components:[],
-                embeds:[]
-            })
+        if(!round.rechazo){
+            if(pointsRival > pointsUser){
+                rivalOb.addPoints(pointsInGame);
+                lastMsg = await round.lastMsg.reply({
+                    content:`${rival} se lleva ${pointsInGame} puntos de envido!`,
+                    components:[],
+                    embeds:[]
+                })
+            }else if(pointsUser > pointsRival){
+                userOb.addPoints(pointsInGame);
+                lastMsg = await round.lastMsg.reply({
+                    content:`${user} se lleva ${pointsInGame} puntos de envido!`,
+                    components:[],
+                    embeds:[]
+                })
+            }else{
+                userOb.addPoints(pointsInGame);
+                userOb.addPoints(pointsInGame);
+                lastMsg = await round.lastMsg.reply({
+                    content:`${user} se lleva ${pointsInGame} puntos de envido!`,
+                    components:[],
+                    embeds:[]
+                })
+            }
         }else{
-            userOb.addPoints(pointsInGame);
-            userOb.addPoints(pointsInGame);
-            lastMsg = await round.lastMsg.reply({
-                content:`${user} se lleva ${pointsInGame} puntos de envido!`,
-                components:[],
-                embeds:[]
-            })
+            lastMsg = round.lastMsg;
         }
     }else if(respTruco.values[0] == "acepto"){
         jugarEnvido = false;
@@ -1919,33 +1923,197 @@ module.exports = {
                     let pointsRival = rivalOb.getCardPoints;
                     let pointsUser = userOb.getCardPoints;
                     pointsInGame = game.getPointsEnvido;
-                    let lastmsg;
-                    if(pointsRival > pointsUser){
-                        rivalOb.addPoints(pointsInGame);
-                        lastmsg =await round.lastMsg.reply({
-                            content:`${rival} se lleva ${pointsInGame} puntos de envido!`,
-                            components:[],
-                            embeds:[]
-                        })
-                    }else if(pointsUser > pointsRival){
-                        userOb.addPoints(pointsInGame);
-                        lastmsg =await round.lastMsg.reply({
-                            content:`${user} se lleva ${pointsInGame} puntos de envido!`,
-                            components:[],
-                            embeds:[]
-                        })
+                    let lastmsg;   //si lo cancela se lleva el otroxd
+                    let elegirCarta = false;
+                    if(!round.rechazo){
+                        if(pointsRival > pointsUser){
+                            rivalOb.addPoints(pointsInGame);
+                            lastmsg =await round.lastMsg.reply({
+                                content:`${rival} se lleva ${pointsInGame} puntos de envido!`,
+                                components:[],
+                                embeds:[]
+                            })
+                        }else if(pointsUser > pointsRival){
+                            userOb.addPoints(pointsInGame);
+                            lastmsg =await round.lastMsg.reply({
+                                content:`${user} se lleva ${pointsInGame} puntos de envido!`,
+                                components:[],
+                                embeds:[]
+                            })
+                        }else{
+                            userOb.addPoints(pointsInGame);
+                            lastmsg =await round.lastMsg.reply({
+                                content:`${user} se lleva ${pointsInGame} puntos de envido!`,
+                                components:[],
+                                embeds:[]
+                            })
+                        }
                     }else{
-                        userOb.addPoints(pointsInGame);
-                        lastmsg =await round.lastMsg.reply({
-                            content:`${user} se lleva ${pointsInGame} puntos de envido!`,
-                            components:[],
-                            embeds:[]
-                        })
+                        lastmsg = round.lastMsg;
                     }
                     jugarEnvido = false;
-                    firstRoundDone = true;
-                    firstRound = await playRound(lastmsg, game, user, rival, userOb, rivalOb, collectorUserFilter, collectorRivalFilter);
-                    if(!salir){
+                    let select = new StringSelectMenuBuilder()
+                    .setCustomId('select')
+                    .setPlaceholder('Select your response!')
+                    .addOptions(
+                    new StringSelectMenuOptionBuilder()
+                        .setLabel('Truco')
+                        .setValue('truco'),
+                    new StringSelectMenuOptionBuilder()
+                        .setLabel('Salir')
+                        .setValue('salir'),);
+                    select = addCardOptions(select, userOb);
+
+                    let rowselect = new ActionRowBuilder()
+                    .addComponents(select);
+                    
+                    let selectUserMsg = await lastmsg.reply({
+                        content:`${user} que harás ahora?`,
+                        components:[rowselect]
+                    })
+
+                    let selectUserInteraction = await selectUserMsg.awaitMessageComponent({filter:collectorUserFilter, componentType:3,time:60000});
+
+                    selectUserMsg = await selectUserMsg.edit({
+                        content:`${user} seleccionó ${selectUserInteraction.values[0]}`,
+                        components:[],
+                        embeds:[]
+                    })
+
+                    if(selectUserInteraction.values[0] == "truco"){
+                        let trucoResp = new StringSelectMenuBuilder()
+                        .setCustomId('truco')
+                        .setPlaceholder('Select your response!')
+                        .addOptions(
+                        new StringSelectMenuOptionBuilder()
+                            .setLabel('Quiero')
+                            .setValue('acepto'),
+                        new StringSelectMenuOptionBuilder()
+                                .setLabel('No quiero')
+                                .setValue('rechazo'),
+                        new StringSelectMenuOptionBuilder()
+                            .setLabel('Retruco')
+                            .setValue('retruco'),);
+                        let trucoRow = new ActionRowBuilder().addComponents(trucoResp);
+                        
+                        let rivalTrucoMsg = await selectUserMsg.reply({
+                            content:`${rival} que harás ahora?`,
+                            components:[trucoRow]
+                        })
+    
+                        let rivalTrucoInteraction = await rivalTrucoMsg.awaitMessageComponent({filter:collectorRivalFilter, componentType:3,time:60000});
+    
+                        rivalTrucoMsg = await rivalTrucoMsg.edit({
+                            content:`${rival} seleccionó ${rivalTrucoInteraction.values[0]}`,
+                            components:[],
+                            embeds:[]
+                        })
+
+                        if(rivalTrucoInteraction.values[0]== "acepto"){
+                            game.playTruco(true);
+                            truco = false;
+                            retruco = true;
+                            vale4 = false;
+                            lastmsg = rivalTrucoMsg;
+                        }else if(rivalTrucoInteraction.values[0]== "rechazo"){
+                            game.playTruco(false);
+                            rechazoTruco = true;
+                            lastMsgInHand = rivalTrucoMsg
+                        }else if(rivalTrucoInteraction.values[0]=="retruco"){
+                            game.playTruco(true);
+                            let retrucoResp = new StringSelectMenuBuilder()
+                            .setCustomId('retruco')
+                            .setPlaceholder('Select your response!')
+                            .addOptions(
+                            new StringSelectMenuOptionBuilder()
+                                .setLabel('Quiero')
+                                .setValue('acepto'),
+                            new StringSelectMenuOptionBuilder()
+                                    .setLabel('No quiero')
+                                    .setValue('rechazo'),
+                            new StringSelectMenuOptionBuilder()
+                                .setLabel('QUIERO VALE CUATRO')
+                                .setValue('vale cuatro'),);
+                            let retrucoRow = new ActionRowBuilder().addComponents(retrucoResp);
+                            
+                            let userRetrucoMsg = await rivalTrucoMsg.reply({
+                                content:`${user} que harás ahora?`,
+                                components:[retrucoRow]
+                            })
+        
+                            let userRetrucoInteraction = await userRetrucoMsg.awaitMessageComponent({filter:collectorUserFilter, componentType:3,time:60000});
+        
+                            userRetrucoMsg = await userRetrucoMsg.edit({
+                                content:`${user} seleccionó ${userRetrucoInteraction.values[0]}`,
+                                components:[],
+                                embeds:[]
+                            })
+
+                            if(userRetrucoInteraction.values[0] =="acepto"){
+                                game.playRetruco(true);
+                                truco = false;
+                                retruco = false;
+                                vale4 = true;
+                                lastmsg = userRetrucoMsg;
+                            }else if(userRetrucoInteraction.values[0]=="rechazo"){
+                                game.playRetruco(false);
+                                rechazoTruco = true;
+                                lastMsgInHand = userRetrucoMsg;
+                            }else if(userRetrucoInteraction.values[0]=="vale cuatro"){
+                                game.playRetruco(true);
+                                let vale4Resp = new StringSelectMenuBuilder()
+                                .setCustomId('vale4')
+                                .setPlaceholder('Select your response!')
+                                .addOptions(
+                                new StringSelectMenuOptionBuilder()
+                                    .setLabel('Quiero')
+                                    .setValue('acepto'),
+                                new StringSelectMenuOptionBuilder()
+                                    .setLabel('No quiero')
+                                    .setValue('rechazo'),)
+                                let vale4Row = new ActionRowBuilder().addComponents(vale4Resp);
+                                
+                                let rivalvale4Msg = await userRetrucoMsg.reply({
+                                    content:`${rival} que harás ahora?`,
+                                    components:[vale4Row]
+                                })
+            
+                                let rivalVale4Interaction = await rivalvale4Msg.awaitMessageComponent({filter:collectorRivalFilter, componentType:3,time:60000});
+            
+                                rivalvale4Msg = await rivalvale4Msg.edit({
+                                    content:`${rival} seleccionó ${rivalVale4Interaction.values[0]}`,
+                                    components:[],
+                                    embeds:[]
+                                })
+                                if(rivalVale4Interaction.values[0]=="acepto"){
+                                    game.playValeCuatro(true);
+                                    truco = false;
+                                    retruco = false;
+                                    vale4 = false;
+                                    lastmsg = rivalvale4Msg;
+                                }else if(rivalVale4Interaction.values[0]=="rechazo"){
+                                    game.playValeCuatro(false);
+                                    rechazoTruco = true;
+                                    lastMsgInHand = rivalVale4Interaction;
+                                }
+                            }
+                        }
+                        elegirCarta = true;
+                        jugarEnvido = false;
+                    }else if(["0","1","2"].includes(selectUserInteraction.values[0])){
+                        userFirstCard =userOb.getHand[parseInt(selectUserInteraction.values[0])]; 
+                        userOb.useCard(userFirstCard);
+                        let lassstmsg = await game.showTable(selectUserMsg);    //devuelve msg
+
+                        lastMsgFirstRound = lassstmsg;
+                        if(rivalFirstCard.getTrucoValue > userFirstCard.getTrucoValue){
+                            firstRound = {"winnerOb":rivalOb,"loserOb":userOb,"winner":rival, "loser":user,"draw":false, "lastInteraction":selectUserInteraction,"lastMsg":lassstmsg,"winnerCol":collectorRivalFilter,"loserCol":collectorUserFilter};
+                        }else if(rivalFirstCard.getTrucoValue < userFirstCard.getTrucoValue){
+                            firstRound = {"winnerOb":userOb,"loserOb":rivalOb,"winner":user, "loser":rival,"draw":false, "lastInteraction":selectUserInteraction,"lastMsg":lassstmsg,"winnerCol":collectorUserFilter,"loserCol":collectorRivalFilter};
+                        }else{
+                            firstRound = {"winnerOb":rivalOb,"loserOb":userOb,"winner":rival, "loser":user,"draw":true, "lastInteraction":selectUserInteraction,"lastMsg":lassstmsg,"winnerCol":collectorRivalFilter,"loserCol":collectorUserFilter};
+                        }
+                        firstRoundDone = true;
                         if(firstRound.draw){
                             game.winRound(null);
                             game.nextRound();
@@ -1953,8 +2121,62 @@ module.exports = {
                             game.winRound(firstRound.winnerOb);
                             game.nextRound();
                         }
+                        lastMsgInHand = firstRound.lastMsg;
+                        jugarEnvido = false;
+                    }else if(selectUserInteraction.values[0]=="salir"){
+                        salir = true;
+                        lastMsgInHand = selectUserMsg;
                     }
-                    lastMsgInHand = firstRound.lastMsg;
+                    if(elegirCarta && !rechazoTruco){
+                        let selectCardUser = new StringSelectMenuBuilder()
+                        .setCustomId('selectCardUser')
+                        .setPlaceholder('Selecciona tu jugada')
+                        .setOptions(new StringSelectMenuOptionBuilder().setLabel('Salir').setValue('salir'));
+
+                        selectCardUser = addCardOptions(selectCardUser,userOb);
+
+                        let selectCardRow = new ActionRowBuilder().addComponents(selectCardUser);
+
+                        let selectCardMsg = await lastmsg.reply({
+                            content:`${user} que harás ahora?`,
+                            components:[selectCardRow]
+                        })
+    
+                        let selectCardInteraction = await selectCardMsg.awaitMessageComponent({filter:collectorUserFilter, componentType:3,time:60000});
+    
+                        selectCardMsg = await selectCardMsg.edit({
+                            content:`${user} seleccionó ${selectCardInteraction.values[0]}`,
+                            components:[],
+                            embeds:[]
+                        })
+
+                        if(selectCardInteraction.values[0] != "salir"){
+                            userFirstCard =userOb.getHand[parseInt(selectUserInteraction.values[0])]; 
+                            userOb.useCard(userFirstCard);
+                            let lassstmsg = await game.showTable(selectUserMsg);    //devuelve msg
+
+                            lastMsgFirstRound = lassstmsg;
+                            if(rivalFirstCard.getTrucoValue > userFirstCard.getTrucoValue){
+                                firstRound = {"winnerOb":rivalOb,"loserOb":userOb,"winner":rival, "loser":user,"draw":false, "lastInteraction":selectCardInteraction,"lastMsg":lassstmsg,"winnerCol":collectorRivalFilter,"loserCol":collectorUserFilter};
+                            }else if(rivalFirstCard.getTrucoValue < userFirstCard.getTrucoValue){
+                                firstRound = {"winnerOb":userOb,"loserOb":rivalOb,"winner":user, "loser":rival,"draw":false, "lastInteraction":selectCardInteraction,"lastMsg":lassstmsg,"winnerCol":collectorUserFilter,"loserCol":collectorRivalFilter};
+                            }else{
+                                firstRound = {"winnerOb":rivalOb,"loserOb":userOb,"winner":rival, "loser":user,"draw":true, "lastInteraction":selectCardInteraction,"lastMsg":lassstmsg,"winnerCol":collectorRivalFilter,"loserCol":collectorUserFilter};
+                            }
+                            if(firstRound.draw){
+                                game.winRound(null);
+                                game.nextRound();
+                            }else{
+                                game.winRound(firstRound.winnerOb);
+                                game.nextRound();
+                            }
+                            lastMsgInHand = firstRound.lastMsg;
+                        }else{
+                            salir = true;
+                            lastMsgInHand = selectCardMsg;
+                        }
+                        jugarEnvido = false;
+                    }
                 }
 
                 if(jugarEnvido && !rechazoTruco){
@@ -1964,27 +2186,31 @@ module.exports = {
                     let pointsUser = userOb.getCardPoints;
                     pointsInGame = game.getPointsEnvido;
                     let lastmsg;
-                    if(pointsRival > pointsUser){
-                        rivalOb.addPoints(pointsInGame);
-                        lastmsg =await round.lastMsg.reply({
-                            content:`${rival} se lleva ${pointsInGame} puntos de envido!`,
-                            components:[],
-                            embeds:[]
-                        })
-                    }else if(pointsUser > pointsRival){
-                        userOb.addPoints(pointsInGame);
-                        lastmsg =await round.lastMsg.reply({
-                            content:`${user} se lleva ${pointsInGame} puntos de envido!`,
-                            components:[],
-                            embeds:[]
-                        })
+                    if(!round.rechazo){
+                        if(pointsRival > pointsUser){
+                            rivalOb.addPoints(pointsInGame);
+                            lastmsg =await round.lastMsg.reply({
+                                content:`${rival} se lleva ${pointsInGame} puntos de envido!`,
+                                components:[],
+                                embeds:[]
+                            })
+                        }else if(pointsUser > pointsRival){
+                            userOb.addPoints(pointsInGame);
+                            lastmsg =await round.lastMsg.reply({
+                                content:`${user} se lleva ${pointsInGame} puntos de envido!`,
+                                components:[],
+                                embeds:[]
+                            })
+                        }else{
+                            userOb.addPoints(pointsInGame);
+                            lastmsg =await round.lastMsg.reply({
+                                content:`${user} se lleva ${pointsInGame} puntos de envido!`,
+                                components:[],
+                                embeds:[]
+                            })
+                        }
                     }else{
-                        userOb.addPoints(pointsInGame);
-                        lastmsg =await round.lastMsg.reply({
-                            content:`${user} se lleva ${pointsInGame} puntos de envido!`,
-                            components:[],
-                            embeds:[]
-                        })
+                        lastmsg = round.lastMsg;
                     }
                     lastMsgFirstRound = lastmsg;
                     
@@ -2000,27 +2226,31 @@ module.exports = {
                 let pointsUser = userOb.getCardPoints;
                 pointsInGame = game.getPointsEnvido;
                 let lastmsg;
-                if(pointsRival > pointsUser){
-                    rivalOb.addPoints(pointsInGame);
-                    lastmsg =await round.lastMsg.reply({
-                        content:`${rival} se lleva ${pointsInGame} puntos de envido!`,
-                        components:[],
-                        embeds:[]
-                    })
-                }else if(pointsUser > pointsRival){
-                    userOb.addPoints(pointsInGame);
-                    lastmsg =await round.lastMsg.reply({
-                        content:`${user} se lleva ${pointsInGame} puntos de envido!`,
-                        components:[],
-                        embeds:[]
-                    })
+                if(!round.rechazo){
+                    if(pointsRival > pointsUser){
+                        rivalOb.addPoints(pointsInGame);
+                        lastmsg =await round.lastMsg.reply({
+                            content:`${rival} se lleva ${pointsInGame} puntos de envido!`,
+                            components:[],
+                            embeds:[]
+                        })
+                    }else if(pointsUser > pointsRival){
+                        userOb.addPoints(pointsInGame);
+                        lastmsg =await round.lastMsg.reply({
+                            content:`${user} se lleva ${pointsInGame} puntos de envido!`,
+                            components:[],
+                            embeds:[]
+                        })
+                    }else{
+                        rivalOb.addPoints(pointsInGame);
+                        lastmsg =await round.lastMsg.reply({
+                            content:`${rival} se lleva ${pointsInGame} puntos de envido!`,
+                            components:[],
+                            embeds:[]
+                        })
+                    }
                 }else{
-                    rivalOb.addPoints(pointsInGame);
-                    lastmsg =await round.lastMsg.reply({
-                        content:`${rival} se lleva ${pointsInGame} puntos de envido!`,
-                        components:[],
-                        embeds:[]
-                    })
+                    lastmsg = round.lastMsg;
                 }
                 lastMsgFirstRound = lastmsg;
             }
