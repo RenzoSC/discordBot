@@ -46,9 +46,10 @@ class Player{
     }
 
     get getCardPoints(){
-        let card1 = this.hand.unused[0];
-        let card2 = this.hand.unused[1];
-        let card3 = this.hand.unused[2];
+        let cards = this.hand.unused.concat(this.hand.used);
+        let card1 = cards[0];
+        let card2 = cards[1];
+        let card3 = cards[2];
         if(card1.getType == card2.getType && card2.getType == card3.getType){
             return Math.max(...[card1.getValue + card2.getValue, card1.getValue + card3.getValue, card2.getValue + card3.getValue]) +20;
         }else{
@@ -442,11 +443,11 @@ async function roundEnvido(round1RivalInteraction, round1response, game,user,riv
 
         if(interR1[0].values[0] == 'acepto' ){
             game.playEnvido(true);
-            return {'lastInteraction':interR1[0],'lastMsg':interR1[1]};
+            return {'lastInteraction':interR1[0],'lastMsg':interR1[1], 'rechazo':false};
         }else if(interR1[0].values[0] == 'rechazo'){
             game.playEnvido(false);
             lastMsgInHand = interR1[1];
-            return {'lastInteraction':interR1[0],'lastMsg':interR1[1]};
+            return {'lastInteraction':interR1[0],'lastMsg':interR1[1], 'rechazo':true};
         }else if(interR1[0].values[0] == 'envido'){   //envido envido
             game.playEnvido(true);
             lastMsgInHand = interR1[1];
@@ -454,41 +455,43 @@ async function roundEnvido(round1RivalInteraction, round1response, game,user,riv
 
             if(interR2[0].values[0] == 'acepto'){
                 game.playEnvido(true);
-                return {'lastInteraction':interR2[0],'lastMsg':interR2[1]};
+                return {'lastInteraction':interR2[0],'lastMsg':interR2[1], 'rechazo':false};
             }else if(interR2[0].values[0] == 'rechazo'){
                 lastMsgInHand = interR2[1];
                 game.playEnvido(false);
-                return {'lastInteraction':interR2[0],'lastMsg':interR2[1]};
+                return {'lastInteraction':interR2[0],'lastMsg':interR2[1],'rechazo':true};
             }else if(interR2[0].values[0] == 'real envido'){   //envido envido real envido
                 game.playEnvido(true);
                 const interR3 = await compRoundEnvido(envSelectResponse3,interR2[0],interR2[1],user,collectorUserFilter);
 
                 if(interR3[0].values[0] == 'acepto'){
                     game.playRenvido(true);
-                    return {'lastInteraction':interR3[0],'lastMsg':interR3[1]};
+                    return {'lastInteraction':interR3[0],'lastMsg':interR3[1], 'rechazo':false};
                 }else if(interR3[0].values[0] == 'rechazo'){
                     game.playRenvido(false);
                     lastMsgInHand = interR3[1];
-                    return {'lastInteraction':interR3[0],'lastMsg':interR3[1]};
+                    return {'lastInteraction':interR3[0],'lastMsg':interR3[1],'rechazo':true};
                 }else if(interR3[0].values[0] == 'falta envido'){  //envido envido real envido falta envido
                     game.playRenvido(true);
                     const interR4 = await compRoundEnvido(envSelectResponse4, interR3[0], interR3[1], rival, collectorRivalFilter);
 
                     if(interR4[0].values[0] == 'acepto'){
                         game.playFenvido(true);
-                        return {'lastInteraction':interR4[0],'lastMsg':interR4[1]};
+                        return {'lastInteraction':interR4[0],'lastMsg':interR4[1], 'rechazo':false};
                     }else if(interR4[0].values[0]=='rechazo'){
                         game.playFenvido(false);
                         lastMsgInHand = interR4[1];
-                        return {'lastInteraction':interR4[0],'lastMsg':interR4[1]};
+                        return {'lastInteraction':interR4[0],'lastMsg':interR4[1],'rechazo':true};
                     }else if(interR4[0].values[0]=="salir"){
                         salir = true;
                         lastMsgInHand = interR4[1];
+                        return {'lastInteraction':interR4[0],'lastMsg':interR4[1],'rechazo':true};
                     }
             
                 }else if(interR3[0].values[0]=="salir"){
                     salir = true;
                     lastMsgInHand = interR3[1];
+                    return {'lastInteraction':interR3[0],'lastMsg':interR3[1],'rechazo':true};
                 }
         
 
@@ -499,18 +502,20 @@ async function roundEnvido(round1RivalInteraction, round1response, game,user,riv
 
                 if(interR3[0].values[0] == 'acepto'){
                     game.playFenvido(true);
-                    return {'lastInteraction':interR3[0],'lastMsg':interR3[1]};
+                    return {'lastInteraction':interR3[0],'lastMsg':interR3[1], 'rechazo':false};
                 }else if(interR3[0].values[0] == 'rechazo'){
                     game.playFenvido(false);
                     lastMsgInHand = interR3[1];
-                    return {'lastInteraction':interR3[0],'lastMsg':interR3[1]};
+                    return {'lastInteraction':interR3[0],'lastMsg':interR3[1],'rechazo':true};
                 }else if(interR3[0].values[0]=="salir"){
                     salir = true;
                     lastMsgInHand = interR3[1];
+                    return {'lastInteraction':interR3[0],'lastMsg':interR3[1],'rechazo':true};
                 }
             }else if(interR2[0].values[0]=="salir"){
                 salir = true;
                 lastMsgInHand = interR2[1];
+                return {'lastInteraction':interR2[0],'lastMsg':interR2[1],'rechazo':true};
             }
     
         }else if(interR1[0].values[0] == 'real envido'){  //envido real envido
@@ -520,11 +525,11 @@ async function roundEnvido(round1RivalInteraction, round1response, game,user,riv
 
             if(interR2[0].values[0] == 'acepto'){
                 game.playRenvido(true);
-                return {'lastInteraction':interR2[0],'lastMsg':interR2[1]};
+                return {'lastInteraction':interR2[0],'lastMsg':interR2[1], 'rechazo':false};
             }else if (interR2[0].values[0] == 'rechazo'){
                 game.playRenvido(false);
                 lastMsgInHand = interR2[1];
-                return {'lastInteraction':interR2[0],'lastMsg':interR2[1]};
+                return {'lastInteraction':interR2[0],'lastMsg':interR2[1],'rechazo':true};
             }else if(interR2[0].values[0] == 'falta envido'){ //envido real envido falta envido
                 game.playRenvido(true);
 
@@ -532,19 +537,21 @@ async function roundEnvido(round1RivalInteraction, round1response, game,user,riv
 
                 if(interR3[0].values[0] == 'acepto'){
                     game.playFenvido(true);
-                    return {'lastInteraction':interR3[0],'lastMsg':interR3[1]};
+                    return {'lastInteraction':interR3[0],'lastMsg':interR3[1], 'rechazo':false};
                 }else if(interR3[0].values[0] == ' rechazo'){
                     game.playFenvido(false);
                     lastMsgInHand = interR3[1];
-                    return {'lastInteraction':interR3[0],'lastMsg':interR3[1]};
+                    return {'lastInteraction':interR3[0],'lastMsg':interR3[1],'rechazo':true};
                 }else if(interR3[0].values[0]=="salir"){
                     salir = true;
                     lastMsgInHand = interR3[1];
+                    return {'lastInteraction':interR3[0],'lastMsg':interR3[1],'rechazo':true};
                 }
         
             }else if(interR2[0].values[0]=="salir"){
                 salir = true;
                 lastMsgInHand = interR2[1];
+                return {'lastInteraction':interR2[0],'lastMsg':interR2[1],'rechazo':true};
             }
     
         }else if(interR1[0].values[0] == 'falta envido'){  //envido falta envido
@@ -554,19 +561,21 @@ async function roundEnvido(round1RivalInteraction, round1response, game,user,riv
 
             if(interR2[0].values[0] == 'acepto'){
                 game.playFenvido(true);
-                return {'lastInteraction':interR2[0],'lastMsg':interR2[1]};
+                return {'lastInteraction':interR2[0],'lastMsg':interR2[1], 'rechazo':false};
             }else if(interR2[0].values[0] == 'rechazo'){
                 game.playFenvido(false);
                 lastMsgInHand = interR2[1];
-                return {'lastInteraction':interR2[0],'lastMsg':interR2[1]};
+                return {'lastInteraction':interR2[0],'lastMsg':interR2[1],'rechazo':true};
             }else if(interR2[0].values[0]=="salir"){
                 salir = true;
                 lastMsgInHand = interR2[1];
+                return {'lastInteraction':interR2[0],'lastMsg':interR2[1],'rechazo':true};
             }
     
         }else if(interR1[0].values[0]=="salir"){
             salir = true;
             lastMsgInHand = interR1[1];
+            return {'lastInteraction':interR1[0],'lastMsg':interR1[1],'rechazo':true};
         }
 
     }else if(round1RivalInteraction.values[0] == 'real envido'){ // first round real envido
@@ -575,48 +584,52 @@ async function roundEnvido(round1RivalInteraction, round1response, game,user,riv
 
         if(interR1[0].values[0] == 'acepto'){
             game.playRenvido(true);
-            return {'lastInteraction':interR1[0],'lastMsg':interR1[1]};
+            return {'lastInteraction':interR1[0],'lastMsg':interR1[1], 'rechazo':false};
         }else if(interR1[0].values[0] =='rechazo'){
             game.playRenvido(false);
             lastMsgInHand = interR1[1];
-            return {'lastInteraction':interR1[0],'lastMsg':interR1[1]};
+            return {'lastInteraction':interR1[0],'lastMsg':interR1[1],'rechazo':true};
         }else if(interR1[0].values[0] == 'falta envido'){  //real envido falta envido
             game.playRenvido(true);
 
             const interR2 = await compRoundEnvido(envSelectResponse4, interR1[0], interR1[1], user, collectorUserFilter);
             if(interR2[0].values[0] == 'acepto'){
                 game.playFenvido(true);
-                return {'lastInteraction':interR2[0],'lastMsg':interR2[1]};
+                return {'lastInteraction':interR2[0],'lastMsg':interR2[1], 'rechazo':false};
             }else if(interR2[0].values[0] == 'rechazo'){
                 game.playFenvido(false);
                 lastMsgInHand = interR2[1];
-                return {'lastInteraction':interR2[0],'lastMsg':interR2[1]};
+                return {'lastInteraction':interR2[0],'lastMsg':interR2[1],'rechazo':true};
             }else if(interR2[0].values[0]=="salir"){
                 salir = true;
                 lastMsgInHand = interR2[1];
+                return {'lastInteraction':interR2[0],'lastMsg':interR2[1],'rechazo':true};
             }
     
         }else if(interR1[0].values[0]=="salir"){
             salir = true;
             lastMsgInHand = interR1[1];
+            return {'lastInteraction':interR1[0],'lastMsg':interR1[1],'rechazo':true};
         }
 
     }else if(round1RivalInteraction.values[0] == 'falta envido'){// first round falta envido
         const interR1 = await compRoundEnvido(envSelectResponse4, round1RivalInteraction, round1response, rival, collectorRivalFilter);
         if(interR1[0].values[0] == 'acepto'){
             game.playRenvido(true);
-            return {'lastInteraction':interR1[0],'lastMsg':interR1[1]};
+            return {'lastInteraction':interR1[0],'lastMsg':interR1[1], 'rechazo':false};
         }else if(interR1[0].values[0] =='rechazo'){
             game.playRenvido(false);
             lastMsgInHand = interR1[1];
-            return {'lastInteraction':interR1[0],'lastMsg':interR1[1]};
+            return {'lastInteraction':interR1[0],'lastMsg':interR1[1],'rechazo':true};
         }else if(interR1[0].values[0]=="salir"){
             salir = true;
             lastMsgInHand = interR1[1];
+            return {'lastInteraction':interR1[0],'lastMsg':interR1[1],'rechazo':true};
         }
     }else if(round1RivalInteraction.values[0]=='salir'){
         salir = true;
         lastMsgInHand = round1response;
+        return {'lastInteraction':round1RivalInteraction,'lastMsg':round1response,'rechazo':true};
     }
 }
 
@@ -1903,7 +1916,6 @@ module.exports = {
                     lastMsgInHand = userCardRespMsg;
                 }else if(["envido", "real envido", "falta envido"].includes(userCardResp.values[0])){
                     const round = await roundEnvido(userCardResp, userCardRespMsg,game,rival,user,collectorRivalFilter, collectorUserFilter);
-                    console.log("entre acá");
                     let pointsRival = rivalOb.getCardPoints;
                     let pointsUser = userOb.getCardPoints;
                     pointsInGame = game.getPointsEnvido;
@@ -1978,9 +1990,6 @@ module.exports = {
                     
                 }
                 
-                if(rechazoTruco || userCardResp.values[0] == "salir"){
-                    //creo q no va
-                }
             }else if(round1RivalInteraction.values[0]== "salir"){
                 salir = true
                 lastMsgInHand = round1response;
@@ -2006,9 +2015,9 @@ module.exports = {
                         embeds:[]
                     })
                 }else{
-                    userOb.addPoints(pointsInGame);
+                    rivalOb.addPoints(pointsInGame);
                     lastmsg =await round.lastMsg.reply({
-                        content:`${user} se lleva ${pointsInGame} puntos de envido!`,
+                        content:`${rival} se lleva ${pointsInGame} puntos de envido!`,
                         components:[],
                         embeds:[]
                     })
@@ -2085,9 +2094,9 @@ module.exports = {
                     }
                 }
             }
-            //mensaje de quien ganó la ronda xd
+            let winnerHand = game.getHandWinTrack[0] == rivalOb ? rival:user;
             lastMsgInHand= await lastMsgInHand.reply({
-                content:`La ronda finalizó.\nGanó ${game.getHandWinTrack[0]}\n+${pointsInGame} puntos`,
+                content:`La ronda finalizó.\nGanó ${winnerHand}\n+${pointsInGame} puntos!!`,
                 components:[],
                 embeds:[]
             })
