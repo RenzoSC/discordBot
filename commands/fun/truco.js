@@ -2313,8 +2313,8 @@ module.exports = {
                     embeds:[]
                 })
             }else{
-                let winnerHandOb = salir.us == user?userOb:rivalOb;
-                let winnerHandUs = salir.us == user?user:rival;
+                let winnerHandOb = salir.us == user?rivalOb:userOb;
+                let winnerHandUs = salir.us == user?rival:user;
                 pointsInGame = game.getPointsRound;
                 winnerHandOb.addPoints(pointsInGame);
                 game.winHand(winnerHandOb);
