@@ -839,6 +839,7 @@ async function selectionCardRound(lastMsg, game, caller, target,  callerOb, targ
     if(['0','1','2'].includes(roundInteraction.values[0])){
         cardCaller = callerOb.getHand[parseInt(roundInteraction.values[0])];
         callerOb.useCard(cardCaller);
+        await game.sendCardsTo(caller,callerOb);
         await game.showTable(roundMsg);    //devuelve msg...
         let targetRow = new ActionRowBuilder()
         .addComponents(selectResponseTarget);
@@ -858,6 +859,7 @@ async function selectionCardRound(lastMsg, game, caller, target,  callerOb, targ
         if(['0','1','2'].includes(roundTargetInteraction.values[0])){
             cardTarget = targetOb.getHand[parseInt(roundTargetInteraction.values[0])];
             targetOb.useCard(cardTarget);
+            await game.sendCardsTo(target,targetOb);
             lastMsgBis = await game.showTable(roundTargetMsg);
             lastInteraction = roundTargetInteraction;
         }
@@ -1236,6 +1238,7 @@ async function playRound(lastMsg, game, caller, target,callerOb,targetOb, collec
     }else if(['0','1','2'].includes(roundInteraction.values[0]) && needToPlayCards){
         cardCaller = callerOb.getHand[parseInt(roundInteraction.values[0])];
         callerOb.useCard(cardCaller);
+        await game.sendCardsTo(caller,callerOb);
         await game.showTable(roundMsg);    //devuelve msg
         let targetRow = new ActionRowBuilder()
         .addComponents(selectResponseTarget);
@@ -1328,6 +1331,7 @@ async function playRound(lastMsg, game, caller, target,callerOb,targetOb, collec
                         if(['0','1','2'].includes(cardTargetInteraction.values[0])){
                             cardTarget = targetOb.getHand[parseInt(cardTargetInteraction.values[0])];
                             targetOb.useCard(cardTarget);
+                            await game.sendCardsTo(target,targetOb);
                             lastMsgBis =await game.showTable(cardMsgTarget);
                             lastInteractionBis= cardTargetInteraction;
                         }
@@ -1366,6 +1370,7 @@ async function playRound(lastMsg, game, caller, target,callerOb,targetOb, collec
                     if(['0','1','2'].includes(cardTargetInteraction.values[0])){
                         cardTarget = targetOb.getHand[parseInt(cardTargetInteraction.values[0])];
                         targetOb.useCard(cardTarget);
+                        await game.sendCardsTo(target,targetOb);
                         lastMsgBis =await game.showTable(cardMsgTarget);
                         lastInteractionBis = cardTargetInteraction;
                     }
@@ -1404,6 +1409,7 @@ async function playRound(lastMsg, game, caller, target,callerOb,targetOb, collec
                 if(['0','1','2'].includes(cardTargetInteraction.values[0])){
                     cardTarget = targetOb.getHand[parseInt(cardTargetInteraction.values[0])];
                     targetOb.useCard(cardTarget);
+                    await game.sendCardsTo(target,targetOb);
                     lastMsgBis = await game.showTable(cardMsgTarget);
                     lastInteractionBis = cardTargetInteraction;
                 }
@@ -1476,6 +1482,7 @@ async function playRound(lastMsg, game, caller, target,callerOb,targetOb, collec
                     if(['0','1','2'].includes(cardTargetInteraction.values[0])){
                         cardTarget = targetOb.getHand[parseInt(cardTargetInteraction.values[0])];
                         targetOb.useCard(cardTarget);
+                        await game.sendCardsTo(target,targetOb);
                         lastMsgBis =await game.showTable(cardMsgTarget);
                         lastInteractionBis = cardTargetInteraction;
                     }
@@ -1513,6 +1520,7 @@ async function playRound(lastMsg, game, caller, target,callerOb,targetOb, collec
                 if(['0','1','2'].includes(cardTargetInteraction.values[0])){
                     cardTarget = targetOb.getHand[parseInt(cardTargetInteraction.values[0])];
                     targetOb.useCard(cardTarget);
+                    await game.sendCardsTo(target,targetOb);
                     lastMsgBis =await game.showTable(cardMsgTarget);
                     lastInteractionBis = cardTargetInteraction;
                 }
@@ -1566,6 +1574,7 @@ async function playRound(lastMsg, game, caller, target,callerOb,targetOb, collec
                 if(['0','1','2'].includes(cardTargetInteraction.values[0])){
                     cardTarget = targetOb.getHand[parseInt(cardTargetInteraction.values[0])];
                     targetOb.useCard(cardTarget);
+                    await game.sendCardsTo(target,targetOb);
                     lastMsgBis=await game.showTable(cardMsgTarget);
                     lastInteractionBis=cardTargetInteraction;
                 }
@@ -1587,6 +1596,7 @@ async function playRound(lastMsg, game, caller, target,callerOb,targetOb, collec
             cardTarget = targetOb.getHand[parseInt(roundTargetInteraction.values[0])];
 
             targetOb.useCard(cardTarget);
+            await game.sendCardsTo(target,targetOb);
             lastMsgBis=await game.showTable(roundTargetMsg);
             lastInteractionBis = roundTargetInteraction;
         }else if(roundTargetInteraction.values[0]=="salir"){
@@ -1815,6 +1825,7 @@ module.exports = {
             }else if(round1RivalInteraction.values[0] == '0' || round1RivalInteraction.values[0] == '1' || round1RivalInteraction.values[0] == '2'){
                 rivalFirstCard = rivalOb.getHand[parseInt(round1RivalInteraction.values[0])];
                 rivalOb.useCard(rivalFirstCard);
+                await game.sendCardsTo(rival,rivalOb);
                 await game.showTable(round1response);   //esto tmb devuelve un msg....
 
                 let cardRound1Row = new ActionRowBuilder()
@@ -1878,6 +1889,7 @@ module.exports = {
                     if(['0','1','2'].includes(selectFRInteraction.values[0])){
                         userFirstCard =userOb.getHand[parseInt(selectFRInteraction.values[0])];
                         userOb.useCard(userFirstCard);
+                        await game.sendCardsTo(user,userOb);
                         let lastMsg = await game.showTable(selectFRMsg);
                         lastMsgFirstRound = lastMsg;
                         jugarEnvido = false;
@@ -1903,6 +1915,7 @@ module.exports = {
                 }else if(userCardResp.values[0] == '0' || userCardResp.values[0] == '1' || userCardResp.values[0] == '2'){
                     userFirstCard =userOb.getHand[parseInt(userCardResp.values[0])]; 
                     userOb.useCard(userFirstCard);
+                    await game.sendCardsTo(user,userOb);
                     let lassstmsg = await game.showTable(userCardRespMsg);    //devuelve msg
 
                     lastMsgFirstRound = lassstmsg;
@@ -2119,6 +2132,7 @@ module.exports = {
                     }else if(["0","1","2"].includes(selectUserInteraction.values[0])){
                         userFirstCard =userOb.getHand[parseInt(selectUserInteraction.values[0])]; 
                         userOb.useCard(userFirstCard);
+                        await game.sendCardsTo(user,userOb);
                         let lassstmsg = await game.showTable(selectUserMsg);    //devuelve msg
 
                         lastMsgFirstRound = lassstmsg;
@@ -2169,6 +2183,7 @@ module.exports = {
                         if(selectCardInteraction.values[0] != "salir"){
                             userFirstCard =userOb.getHand[parseInt(selectUserInteraction.values[0])]; 
                             userOb.useCard(userFirstCard);
+                            await game.sendCardsTo(user,userOb);
                             let lassstmsg = await game.showTable(selectUserMsg);    //devuelve msg
 
                             lastMsgFirstRound = lassstmsg;
