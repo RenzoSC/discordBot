@@ -658,7 +658,7 @@ async function trucoFirstRound(selectResponse, responseMsg, responseInteraction,
     })
     if(respTruco.values[0] == "envido" || respTruco.values[0] == "falta envido" || respTruco.values[0] == "real envido"){
         jugarEnvido = false;
-        const round = await roundEnvido(respTruco, respTrucoMsg, game, rival,user,collectorRivalFilter, collectorUserFilter);
+        const round = await roundEnvido(respTruco, respTrucoMsg, game, rival,user,rivalOb, userOb,collectorRivalFilter, collectorUserFilter);
         let pointsRival = rivalOb.getCardPoints;
         let pointsUser = userOb.getCardPoints;
         pointsInGame = game.getPointsEnvido;
@@ -686,10 +686,11 @@ async function trucoFirstRound(selectResponse, responseMsg, responseInteraction,
                 })
             }
         }else{
-            let usEnv = round.rechazo.ob;
-            usEnv.addPoints(pointsInGame);
+            let usEnvob = round.rechazo.us==user?rivalOb:userOb;
+            let usEnv = round.rechazo.us == user ?rival:user;
+            usEnvob.addPoints(pointsInGame);
             lastMsg = await round.lastMsg.reply({
-                content:`${round.rechazo.us} se lleva ${pointsInGame} puntos de envido!`,
+                content:`${usEnv} se lleva ${pointsInGame} puntos de envido!`,
                 components:[],
                 embeds:[]
             })
@@ -1925,7 +1926,7 @@ module.exports = {
                     salir = {"ob":userOb,"us":user,"val":true};
                     lastMsgInHand = userCardRespMsg;
                 }else if(["envido", "real envido", "falta envido"].includes(userCardResp.values[0])){
-                    const round = await roundEnvido(userCardResp, userCardRespMsg,game,rival,user,collectorRivalFilter, collectorUserFilter);
+                    const round = await roundEnvido(userCardResp, userCardRespMsg,game,rival,user,rivalOb, userOb,collectorRivalFilter, collectorUserFilter);
                     let pointsRival = rivalOb.getCardPoints;
                     let pointsUser = userOb.getCardPoints;
                     pointsInGame = game.getPointsEnvido;
@@ -1955,10 +1956,12 @@ module.exports = {
                             })
                         }
                     }else{
-                        let usEnv = round.rechazo.ob;
-                        usEnv.addPoints(pointsInGame);
+                        let usEnvob = round.rechazo.us==user?rivalOb:userOb;
+                        let usEnv = round.rechazo.us == user ?rival:user;
+                        
+                        usEnvob.addPoints(pointsInGame);
                         lastmsg = await round.lastMsg.reply({
-                            content:`${round.rechazo.us} se lleva ${pointsInGame} puntos de envido!`,
+                            content:`${usEnv} se lleva ${pointsInGame} puntos de envido!`,
                             components:[],
                             embeds:[]
                         })
@@ -2196,7 +2199,7 @@ module.exports = {
                 lastMsgInHand = round1response;
             }
             if(jugarEnvido && !rechazoTruco && !salir.val){
-                const round = await roundEnvido(round1RivalInteraction, round1response, game, user,rival, collectorUserFilter, collectorRivalFilter);   
+                const round = await roundEnvido(round1RivalInteraction, round1response, game, user,rival, userOb, rivalOb, collectorUserFilter, collectorRivalFilter);   
                 let pointsRival = rivalOb.getCardPoints;
                 let pointsUser = userOb.getCardPoints;
                 pointsInGame = game.getPointsEnvido;
@@ -2225,10 +2228,11 @@ module.exports = {
                         })
                     }
                 }else{
-                    let usEnv = round.rechazo.ob;
-                    usEnv.addPoints(pointsInGame);
+                    let usEnvob = round.rechazo.us==user?rivalOb:userOb;
+                    let usEnv = round.rechazo.us == user ?rival:user;
+                    usEnvob.addPoints(pointsInGame);
                     lastmsg = await round.lastMsg.reply({
-                        content:`${round.rechazo.us} se lleva ${pointsInGame} puntos de envido!`,
+                        content:`${usEnv} se lleva ${pointsInGame} puntos de envido!`,
                         components:[],
                         embeds:[]
                     })
