@@ -11,6 +11,14 @@ class Player{
         this.coincidences = {"bastos":{"n":0, "val":0},"copas":{"n":0, "val":0},"espadas":{"n":0, "val":0},"oros":{"n":0, "val":0}};
     }
 
+    resetHand(){
+        this.hand = {"unused":[], "used":[]};
+    }
+    
+    resetCoincidences(){
+        this.coincidences = {"bastos":{"n":0, "val":0},"copas":{"n":0, "val":0},"espadas":{"n":0, "val":0},"oros":{"n":0, "val":0}};
+    }
+
     addCard(card){
         this.hand.unused.push(card);
     }
@@ -653,7 +661,7 @@ async function roundEnvido(round1RivalInteraction, round1response, game,user,riv
     }
 }
 
-let rechazoTruco = false;
+let rechazoTruco = {"ob":null,"us":null,"val":false};
 let jugarEnvido = true;
 let truco = true;
 let retruco = false;
@@ -722,7 +730,7 @@ async function trucoFirstRound(selectResponse, responseMsg, responseInteraction,
         retruco = true;
         vale4 = false;
     }else if(respTruco.values[0] == "rechazo"){
-        rechazoTruco = true;
+        rechazoTruco = {"ob":userOb,"us":user,"val":true};
         game.playTruco(false);
         lastMsg = respTrucoMsg;
         lastMsgInHand  = respTrucoMsg;
@@ -751,7 +759,7 @@ async function trucoFirstRound(selectResponse, responseMsg, responseInteraction,
             retruco = false;
             vale4 = true;
         }else if(respRetruco.values[0] == "rechazo"){
-            rechazoTruco = true;
+            rechazoTruco = {"ob":rivalOb,"us":rival,"val":true};
             game.playRetruco(false);
             lastMsg = respreTrucoMsg;
             lastMsgInHand = respreTrucoMsg;
@@ -781,7 +789,7 @@ async function trucoFirstRound(selectResponse, responseMsg, responseInteraction,
                 retruco = false;
                 vale4 = false;
             }else if(respValetruco.values[0] == "rechazo"){
-                rechazoTruco = true;
+                rechazoTruco = {"ob":userOb,"us":user,"val":true};
                 game.playValeCuatro(false);
                 lastMsg = respvaleTrucoMsg;
                 lastMsgInHand = respvaleTrucoMsg;
@@ -805,8 +813,8 @@ function addCardOptions(selectMenu, user){
 ;    for (let i = 0; i < user.getHand.length; i++) {
         selectMenu.addOptions(
             new StringSelectMenuOptionBuilder()
-            .setLabel(`${cardOption[i]}`)
-            .setValue(`${user.getHand[i].getName}`)
+            .setLabel(`${cardOption[i]} carta`)
+            .setValue(`${i}`)
         );
     }
     return selectMenu;
@@ -1084,9 +1092,9 @@ async function playRound(lastMsg, game, caller, target,callerOb,targetOb, collec
                     lastInteractionBis = cardSelected.lastInteraction;
                 }else if(vale4Interaction.values[0]== "rechazo"){
                     game.playValeCuatro(false);
-                    rechazoTruco = true;
+                    rechazoTruco = {"ob":targetOb,"us":target,"val":true};
                     lastMsgInHand = vale4Msg;
-                    //termina juego
+                    return {"winnerOb":callerOb,"loserOb":targetOb,"winner":caller,"loser":target,"draw":false,"lastInteraction":vale4Interaction,"lastMsg":vale4Msg, "winnerCol":collectorCaller, "loserCol":collectorTarget};
                 }else if(vale4Interaction.values[0]=="salir"){
                     salir = {"ob":targetOb,"us":target,"val":true};
                     lastMsgInHand = vale4Msg;
@@ -1107,9 +1115,9 @@ async function playRound(lastMsg, game, caller, target,callerOb,targetOb, collec
                 lastInteractionBis = cardSelected.lastInteraction;
             }else if(retrucoInteraction.values[0]== "rechazo"){
                 game.playRetruco(false);
-                rechazoTruco = true;
+                rechazoTruco = {"ob":callerOb,"us":caller,"val":true};
                 lastMsgInHand= retrucoMsg;
-                //termina juego
+                return {"winnerOb":targetOb,"loserOb":callerOb,"winner":target,"loser":caller,"draw":false,"lastInteraction":retrucoInteraction,"lastMsg":retrucoMsg, "winnerCol":collectorTarget, "loserCol":collectorCaller};
             }else if(retrucoInteraction.values[0]=="salir"){
                 salir={"ob":callerOb,"us":caller,"val":true};
                 lastMsgInHand = retrucoMsg;
@@ -1129,9 +1137,9 @@ async function playRound(lastMsg, game, caller, target,callerOb,targetOb, collec
             lastInteractionBis = cardSelected.lastInteraction;
         }else if(trucoInteraction.values[0] == "rechazo"){
             game.playTruco(false);
-            rechazoTruco = true;
+            rechazoTruco = {"ob":targetOb,"us":target,"val":true};
             lastMsgInHand = trucoMsg;
-            //termina juego
+            return {"winnerOb":callerOb,"loserOb":targetOb,"winner":caller,"loser":target,"draw":false,"lastInteraction":trucoInteraction,"lastMsg":trucoMsg, "winnerCol":collectorCaller, "loserCol":collectorTarget};
         }else if(trucoInteraction.values[0]== "salir"){
             salir = {"ob":targetOb,"us":target,"val":true};
             lastMsgInHand = trucoMsg;
@@ -1186,9 +1194,9 @@ async function playRound(lastMsg, game, caller, target,callerOb,targetOb, collec
                 lastInteractionBis = cardSelected.lastInteraction;
             }else if(vale4Interaction.values[0]=="rechazo"){
                 game.playValeCuatro(false);
-                rechazoTruco = true;
+                rechazoTruco = {"ob":callerOb,"us":caller,"val":true};
                 lastMsgInHand = vale4Msg;
-                //termina ronda
+                return {"winnerOb":targetOb,"loserOb":callerOb,"winner":target,"loser":caller,"draw":false,"lastInteraction":vale4Interaction,"lastMsg":vale4Msg, "winnerCol":collectorTarget, "loserCol":collectorCaller};
             }else if(vale4Interaction.values[0]=="salir"){
                 salir = {"ob":callerOb,"us":caller,"val":true};
                 lastMsgInHand = vale4Msg;
@@ -1208,9 +1216,9 @@ async function playRound(lastMsg, game, caller, target,callerOb,targetOb, collec
             lastInteractionBis = cardSelected.lastInteraction;
         }else if(retrucoInteraction.values[0] == "rechazo"){
             game.playRetruco(false);
-            rechazoTruco = true;
+            rechazoTruco = {"ob":targetOb,"us":target,"val":true};
             lastMsgInHand = retrucoMsg;
-            //termina ronda
+            return {"winnerOb":caller,"loserOb":targetOb,"winner":caller,"loser":target,"draw":false,"lastInteraction":retrucoInteraction,"lastMsg":retrucoMsg, "winnerCol":collectorCaller, "loserCol":collectorTarget};
         }else if(retrucoInteraction.values[0]=="salir"){
             salir = {"ob":targetOb,"us":target,"val":true};
             lastMsgInHand = retrucoMsg;
@@ -1246,9 +1254,9 @@ async function playRound(lastMsg, game, caller, target,callerOb,targetOb, collec
             lastInteractionBis = cardSelected.lastInteraction;
         }else if(vale4Interaction.values[0]== "rechazo"){
             game.playValeCuatro(false);
-            rechazoTruco = true;
+            rechazoTruco = {"ob":targetOb,"us":target,"val":true};
             lastMsgInHand = vale4Msg;
-            //termina juego
+            return {"winnerOb":callerOb,"loserOb":targetOb,"winner":caller,"loser":target,"draw":false,"lastInteraction":vale4Interaction,"lastMsg":vale4Msg, "winnerCol":collectorCaller, "loserCol":collectorTarget};
         }else if(vale4Interaction.values[0]=="salir"){
             salir={"ob":targetOb,"us":target,"val":true};
             lastMsgInHand = vale4Msg;
@@ -1360,9 +1368,9 @@ async function playRound(lastMsg, game, caller, target,callerOb,targetOb, collec
                         needToPlayCards = false;
                     }else if(vale4Interaction.values[0]== "rechazo"){
                         game.playValeCuatro(false);
-                        rechazoTruco = true;
+                        rechazoTruco = {"ob":targetOb,"us":target,"val":true};
                         lastMsgInHand = vale4Msg;
-                        //termina juego
+                        return {"winnerOb":callerOb,"loserOb":targetOb,"winner":caller,"loser":target,"draw":false,"lastInteraction":vale4Interaction,"lastMsg":vale4Msg, "winnerCol":collectorCaller, "loserCol":collectorTarget};
                     }else if(vale4Interaction.values[0]=="salir"){
                         salir = {"ob":targetOb,"us":target,"val":true};
                         lastMsgInHand = vale4Msg;
@@ -1399,9 +1407,9 @@ async function playRound(lastMsg, game, caller, target,callerOb,targetOb, collec
                     needToPlayCards = false;
                 }else if(retrucoInteraction.values[0]== "rechazo"){
                     game.playRetruco(false);
-                    rechazoTruco = true;
+                    rechazoTruco = {"ob":targetOb,"us":target,"val":true};
                     lastMsgInHand = retrucoMsg;
-                    //termina juego
+                    return {"winnerOb":callerOb,"loserOb":targetOb,"winner":caller,"loser":target,"draw":false,"lastInteraction":retrucoInteraction,"lastMsg":retrucoMsg, "winnerCol":collectorCaller, "loserCol":collectorTarget};
                 }else if(retrucoInteraction.values[0]=="salir"){
                     salir = {"ob":targetOb,"us":target,"val":true};
                     lastMsgInHand = retrucoMsg;
@@ -1438,9 +1446,9 @@ async function playRound(lastMsg, game, caller, target,callerOb,targetOb, collec
                 needToPlayCards = false;
             }else if(trucoInteraction.values[0] == "rechazo"){
                 game.playTruco(false);
-                rechazoTruco = true;
+                rechazoTruco = {"ob":callerOb,"us":caller,"val":true};
                 lastMsgInHand = trucoMsg;
-                //termina juego
+                return {"winnerOb":targetOb,"loserOb":callerOb,"winner":target,"loser":caller,"draw":false,"lastInteraction":trucoInteraction,"lastMsg":trucoMsg, "winnerCol":collectorTarget, "loserCol":collectorCaller};
             }else if(trucoInteraction.values[0]=="salir"){
                 salir = {"ob":callerOb,"us":caller,"val":true};
                 lastMsgInHand = trucoMsg;
@@ -1511,9 +1519,9 @@ async function playRound(lastMsg, game, caller, target,callerOb,targetOb, collec
                     needToPlayCards=false;
                 }else if(vale4Interaction.values[0]=="rechazo"){
                     game.playValeCuatro(false);
-                    rechazoTruco = true;
+                    rechazoTruco = {"ob":targetOb,"us":target,"val":true};
                     lastMsgInHand = vale4Msg;
-                    //termina ronda
+                    return {"winnerOb":callerOb,"loserOb":targetOb,"winner":caller,"loser":target,"draw":false,"lastInteraction":roundTargetInteraction,"lastMsg":roundTargetMsg, "winnerCol":collectorCaller, "loserCol":collectorTarget};
                 }else if(vale4Interaction.values[0]=="salir"){
                     salir = {"ob":targetOb,"us":target,"val":true};
                     lastMsgInHand = vale4Msg;
@@ -1549,9 +1557,9 @@ async function playRound(lastMsg, game, caller, target,callerOb,targetOb, collec
                 needToPlayCards=false;
             }else if(retrucoInteraction.values[0] == "rechazo"){
                 game.playRetruco(false);
-                rechazoTruco=true;
+                rechazoTruco={"ob":callerOb,"us":caller,"val":true};
                 lastMsgInHand = retrucoMsg;
-                //termina ronda
+                return {"winnerOb":targetOb,"loserOb":callerOb,"winner":target,"loser":caller,"draw":false,"lastInteraction":retrucoInteraction,"lastMsg":retrucoMsg, "winnerCol":collectorTarget, "loserCol":collectorCaller};
             }else if(retrucoInteraction.values[0]=="salir"){
                 salir = {"ob":callerOb,"us":caller,"val":true};
                 lastMsgInHand = retrucoMsg;
@@ -1603,9 +1611,9 @@ async function playRound(lastMsg, game, caller, target,callerOb,targetOb, collec
                 needToPlayCards=false;
             }else if(vale4Interaction.values[0]== "rechazo"){
                 game.playValeCuatro(false);
-                rechazoTruco = true;
+                rechazoTruco = {"ob":callerOb,"us":caller,"val":true};
                 lastMsgInHand = vale4Msg;
-                //termina juego
+                return {"winnerOb":targetOb,"loserOb":callerOb,"winner":target,"loser":caller,"draw":false,"lastInteraction":vale4Interaction,"lastMsg":vale4Msg, "winnerCol":collectorTarget, "loserCol":collectorCaller};
             }else if(vale4Interaction.values[0]=="salir"){
                 salir = {"ob":callerOb,"us":caller,"val":true};
                 lastMsgInHand = vale4Msg;
@@ -1838,6 +1846,7 @@ module.exports = {
                     .setValue('salir'),);
 
                 let lastMsgFirstRound;
+                console.log(round1RivalInteraction.values);
                 if(round1RivalInteraction.values[0] == "truco"){
                     truco = false;
                     retruco = true;
@@ -2039,8 +2048,8 @@ module.exports = {
                                 .setLabel('Quiero')
                                 .setValue('acepto'),
                             new StringSelectMenuOptionBuilder()
-                                    .setLabel('No quiero')
-                                    .setValue('rechazo'),
+                                .setLabel('No quiero')
+                                .setValue('rechazo'),
                             new StringSelectMenuOptionBuilder()
                                 .setLabel('Retruco')
                                 .setValue('retruco'),);
@@ -2067,7 +2076,7 @@ module.exports = {
                                 lastmsg = rivalTrucoMsg;
                             }else if(rivalTrucoInteraction.values[0]== "rechazo"){
                                 game.playTruco(false);
-                                rechazoTruco = true;
+                                rechazoTruco = {"ob":rivalOb,"us":rival,"val":true};
                                 lastMsgInHand = rivalTrucoMsg
                             }else if(rivalTrucoInteraction.values[0]=="retruco"){
                                 game.playTruco(true);
@@ -2107,7 +2116,7 @@ module.exports = {
                                     lastmsg = userRetrucoMsg;
                                 }else if(userRetrucoInteraction.values[0]=="rechazo"){
                                     game.playRetruco(false);
-                                    rechazoTruco = true;
+                                    rechazoTruco = {"ob":userOb,"us":user,"val":true};
                                     lastMsgInHand = userRetrucoMsg;
                                 }else if(userRetrucoInteraction.values[0]=="vale cuatro"){
                                     game.playRetruco(true);
@@ -2143,7 +2152,7 @@ module.exports = {
                                         lastmsg = rivalvale4Msg;
                                     }else if(rivalVale4Interaction.values[0]=="rechazo"){
                                         game.playValeCuatro(false);
-                                        rechazoTruco = true;
+                                        rechazoTruco = {"ob":rivalOb,"us":rival,"val":true};
                                         lastMsgInHand = rivalVale4Interaction;
                                     }
                                 }
@@ -2241,7 +2250,7 @@ module.exports = {
                     let pointsUser = userOb.getCardPoints;
                     pointsInGame = game.getPointsEnvido;
                     let lastmsg;
-                    if(!round.rechazo){
+                    if(!round.rechazo.val){
                         if(pointsRival > pointsUser){
                             rivalOb.addPoints(pointsInGame);
                             lastmsg =await round.lastMsg.reply({
@@ -2353,6 +2362,18 @@ module.exports = {
                         components:[],
                         embeds:[]
                     })
+                }else if(rechazoTruco.val){
+                    let winnerHandOb = rechazoTruco.us == user?rivalOb:userOb;
+                    let winnerHandUs = rechazoTruco.us == user?rival:user;
+                    pointsInGame = game.getPointsRound;
+                    winnerHandOb.addPoints(pointsInGame);
+                    console.log(pointsInGame + " pnso");
+                    game.winHand(winnerHandOb);
+                    lastMsgInHand= await lastMsgInHand.reply({
+                        content:`La mano finalizó.\nGanó ${winnerHandUs}\n+${pointsInGame} puntos!!\nSIGUIENTE MANO!!`,
+                        components:[],
+                        embeds:[]
+                    })
                 }else{
                     let winnerHandOb = salir.us == user?rivalOb:userOb;
                     let winnerHandUs = salir.us == user?rival:user;
@@ -2371,13 +2392,19 @@ module.exports = {
                 game.setPointsRoundIG = 1;
                 game.setFirstStageWon = null;
                 game.setRound = 0;
+                userOb.resetCoincidences();
+                userOb.resetHand();
+                rivalOb.resetCoincidences();
+                rivalOb.resetHand();
+                salir = {"ob":null,"us":null,"val":false};
+                rechazoTruco = {"ob":null,"us":null,"val":false};
+                jugarEnvido = true;
+                truco = true;
+                retruco = false;
+                vale4 = false;
                 iHand++;
                 [userOb,rivalOb] = [rivalOb, userOb];
                 [user,rival] = [rival,user];
-                console.log(userOb);
-                console.log(rivalOb);
-                console.log(userOb.getPoints);
-                console.log(rivalOb.getPoints);
             }catch(e){
                 console.log(e);
                 await interaction.editReply({ content: 'Confirmation not received within 1 minute, cancelling', components: [] });
