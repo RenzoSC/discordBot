@@ -782,11 +782,12 @@ async function trucoFirstRound(selectResponse, responseMsg, responseInteraction,
 }
 
 function addCardOptions(selectMenu, user){
-    for (let i = 0; i < user.getHand.length; i++) {
+    let cardOption = ["primera","segunda","tercera"];
+;    for (let i = 0; i < user.getHand.length; i++) {
         selectMenu.addOptions(
             new StringSelectMenuOptionBuilder()
-            .setLabel(`${user.getHand[i].getName}`)
-            .setValue(`${i}`)
+            .setLabel(`${cardOption[i]}`)
+            .setValue(`${user.getHand[i].getName}`)
         );
     }
     return selectMenu;
