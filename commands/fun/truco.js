@@ -1637,7 +1637,7 @@ async function playRound(lastMsg, game, caller, target,callerOb,targetOb, collec
         return {"winnerOb":targetOb,"loserOb":callerOb,"winner":target,"loser":caller,"draw":false,"lastInteraction":roundInteraction,"lastMsg":roundMsg, "winnerCol":collectorTarget, "loserCol":collectorCaller}; 
     }
 
-    if(!salir.val){
+    if(!salir.val && !rechazoTruco.val){
         let pointsCaller = cardCaller.getTrucoValue;
         let pointsTarget = cardTarget.getTrucoValue;
         
@@ -1851,7 +1851,7 @@ module.exports = {
                     truco = false;
                     retruco = true;
                     vale4 = false;
-                    lastMsgFirstRound= await trucoFirstRound(trucoSelectResponseRound1, round1response, round1RivalInteraction, game, user, rival, collectorUserFilter, collectorRivalFilter, retrucoSelectResponse, vale4SelectResponse);
+                    lastMsgFirstRound= await trucoFirstRound(trucoSelectResponseRound1, round1response, round1RivalInteraction, game, user, rival,userOb,rivalOb, collectorUserFilter, collectorRivalFilter, retrucoSelectResponse, vale4SelectResponse);
                 }else if(round1RivalInteraction.values[0] == '0' || round1RivalInteraction.values[0] == '1' || round1RivalInteraction.values[0] == '2'){
                     rivalFirstCard = rivalOb.getHand[parseInt(round1RivalInteraction.values[0])];
                     rivalOb.useCard(rivalFirstCard);
@@ -1879,7 +1879,7 @@ module.exports = {
                         retruco = true;
                         vale4 = false;
                         jugarEnvido = false;
-                        let msg = await trucoFirstRound(trucoSelectResponseRound1, userCardRespMsg, userCardResp, game, rival, user, collectorRivalFilter, collectorUserFilter, retrucoSelectResponse, vale4SelectResponse);
+                        let msg = await trucoFirstRound(trucoSelectResponseRound1, userCardRespMsg, userCardResp, game, rival, user,rivalOb,userOb, collectorRivalFilter, collectorUserFilter, retrucoSelectResponse, vale4SelectResponse);
 
                         let selectCardUserFR = new StringSelectMenuBuilder()
                         .setCustomId('trucoResp')
@@ -2187,7 +2187,7 @@ module.exports = {
                             salir = {"ob":userOb,"us":user,"val":true};
                             lastMsgInHand = selectUserMsg;
                         }
-                        if(elegirCarta && !rechazoTruco){
+                        if(elegirCarta && !rechazoTruco.val){
                             let selectCardUser = new StringSelectMenuBuilder()
                             .setCustomId('selectCardUser')
                             .setPlaceholder('Selecciona tu jugada')
@@ -2244,7 +2244,7 @@ module.exports = {
                     salir = {"ob":rivalOb,"us":rival,"val":true}
                     lastMsgInHand = round1response;
                 }
-                if(jugarEnvido && !rechazoTruco && !salir.val){
+                if(jugarEnvido && !rechazoTruco.val && !salir.val){
                     const round = await roundEnvido(round1RivalInteraction, round1response, game, user,rival, userOb, rivalOb, collectorUserFilter, collectorRivalFilter);   
                     let pointsRival = rivalOb.getCardPoints;
                     let pointsUser = userOb.getCardPoints;
@@ -2285,7 +2285,7 @@ module.exports = {
                     }
                     lastMsgFirstRound = lastmsg;
                 }
-                if(!firstRoundDone && !rechazoTruco && !salir.val){
+                if(!firstRoundDone && !rechazoTruco.val && !salir.val){
                     firstRound = await playRound(lastMsgFirstRound, game, rival, user, rivalOb, userOb, collectorRivalFilter, collectorUserFilter);
                     lastMsgInHand = firstRound.lastMsg;
                     if(!salir.val){
@@ -2298,7 +2298,7 @@ module.exports = {
                         }
                     }
                 }
-                if(!rechazoTruco && !salir.val){
+                if(!rechazoTruco.val && !salir.val){
                     secondRound = await playRound(firstRound.lastMsg, game,firstRound.winner, firstRound.loser, firstRound.winnerOb, firstRound.loserOb, firstRound.winnerCol, firstRound.loserCol);
                     lastMsgInHand= secondRound.lastMsg;
                     if(!salir.val){
@@ -2310,7 +2310,7 @@ module.exports = {
                             game.nextRound();
                         }
                         let track = game.getTrack;
-                        if((track[0] == null && track[1] == null) || (track[0] != null && track[1]!= null) && !rechazoTruco){
+                        if((track[0] == null && track[1] == null) || (track[0] != null && track[1]!= null) && !rechazoTruco.val){
                             thirdRound = await playRound(secondRound.lastMsg, game, secondRound.winner, secondRound.loser, secondRound.winnerOb, secondRound.loserOb, secondRound.winnerCol, secondRound.loserCol);
                             lastMsgInHand = thirdRound.lastMsg;
                             if(!salir.val){
@@ -2355,7 +2355,7 @@ module.exports = {
                         }
                     }
                 }
-                if(!salir.val){
+                if(!salir.val && !rechazoTruco.val){
                     let winnerHand = game.getHandWinTrack[iHand] == rivalOb ? rival:user;
                     lastMsgInHand= await lastMsgInHand.reply({
                         content:`La mano finalizó.\nGanó ${winnerHand}\n+${pointsInGame} puntos!!\nSIGUIENTE MANO!!`,
@@ -2363,6 +2363,7 @@ module.exports = {
                         embeds:[]
                     })
                 }else if(rechazoTruco.val){
+                    console.log(rechazoTruco);
                     let winnerHandOb = rechazoTruco.us == user?rivalOb:userOb;
                     let winnerHandUs = rechazoTruco.us == user?rival:user;
                     pointsInGame = game.getPointsRound;
