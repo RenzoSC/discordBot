@@ -1,6 +1,8 @@
 const fs = require('fs');
 const path = require('path');
 const { Client, Collection } = require('discord.js');
+const {YouTubeExtractor}=require('@discord-player/extractor');
+const {Player} = require("discord-player");
 require('dotenv').config();
 
 const apiKey = process.env.API_KEY;
@@ -46,4 +48,17 @@ for(const file of eventFiles){
 	}
 }
 
+client.player = new Player(client, {
+	ytdlOptions:{
+		quality:"highestaudio",
+		highWaterMark:1<<25,
+	}
+})
+client.player.extractors.register(YouTubeExtractor);
+const xd = new Player(client, {
+	ytdlOptions:{
+		quality:"highestaudio",
+		highWaterMark:1<<25,
+	}
+});
 client.login(apiKey);
